@@ -5,6 +5,9 @@ import Home from "./pages/Home.jsx";
 import Products from "./pages/Products.jsx";
 import ProductDetail from "./pages/ProductDetail.jsx";
 import Cart from "./pages/Cart.jsx";
+import Checkout from "./pages/Checkout.jsx";
+import Orders from "./pages/Orders.jsx";
+import OrderDetail from "./pages/OrderDetail.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import ComingSoon from "./pages/ComingSoon.jsx";
@@ -20,14 +23,10 @@ export default function App() {
                 <Route path="login" element={<Login />} />
                 <Route path="register" element={<Register />} />
 
-                <Route
-                    path="cart"
-                    element={
-                        <ProtectedRoute>
-                            <Cart />
-                        </ProtectedRoute>
-                    }
-                />
+                <Route path="cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
+                <Route path="checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+                <Route path="orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+                <Route path="orders/:id" element={<ProtectedRoute><OrderDetail /></ProtectedRoute>} />
 
                 {/* Placeholder: built in a later stage */}
                 <Route

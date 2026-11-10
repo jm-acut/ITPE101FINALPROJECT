@@ -43,6 +43,7 @@ export function CartProvider({ children }) {
         () => ({
             cart,
             loading,
+            refresh: () => run(() => cartApi.get()),
             addItem: (productId, quantity = 1) => run(() => cartApi.add({ productId, quantity })),
             setQuantity: (productId, quantity) => run(() => cartApi.setQuantity(productId, quantity)),
             removeItem: (productId) => run(() => cartApi.remove(productId)),

@@ -110,9 +110,11 @@ export default function Cart() {
                         <div><dt>Shipping and discounts</dt><dd>At checkout</dd></div>
                     </dl>
 
-                    <button className="btn btn-primary btn-lg btn-block" disabled>
-                        Checkout (next stage)
-                    </button>
+                                       {cart.hasIssues ? (
+                        <button className="btn btn-primary btn-lg btn-block" disabled>Checkout</button>
+                    ) : (
+                        <Link to="/checkout" className="btn btn-primary btn-lg btn-block">Checkout</Link>
+                    )}
                     {cart.hasIssues && <p className="hint">Fix the highlighted items before checking out.</p>}
 
                     <button className="btn btn-ghost btn-block" onClick={() => act("all", clearCart)}>

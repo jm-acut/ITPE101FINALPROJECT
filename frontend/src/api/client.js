@@ -81,4 +81,13 @@ export const cartApi = {
     clear: () => api.delete("/cart").then(unwrap)
 };
 
+export const orderApi = {
+    quote: (couponCode) => api.post("/orders/quote", { couponCode }).then(unwrap),
+    create: (body, idempotencyKey) =>
+        api.post("/orders", body, { headers: { "Idempotency-Key": idempotencyKey } }).then(unwrap),
+    list: (params) => api.get("/orders", { params }).then(unwrap),
+    get: (id) => api.get(`/orders/${id}`).then(unwrap),
+    cancel: (id) => api.post(`/orders/${id}/cancel`).then(unwrap)
+};
+
 export default api;

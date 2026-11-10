@@ -58,3 +58,17 @@ export const stockStatus = (stock) => {
     if (stock <= 5) return { label: `Only ${stock} left`, tone: "low" };
     return { label: "In stock", tone: "in" };
 };
+
+
+export const ORDER_STATUS = {
+    pending_payment: { label: "Awaiting payment", tone: "warn" },
+    paid: { label: "Paid", tone: "ok" },
+    processing: { label: "Processing", tone: "info" },
+    shipped: { label: "Shipped", tone: "info" },
+    delivered: { label: "Delivered", tone: "ok" },
+    cancelled: { label: "Cancelled", tone: "bad" },
+    expired: { label: "Expired", tone: "bad" }
+};
+
+export const formatDateTime = (iso) =>
+    new Date(iso).toLocaleString("en-PH", { dateStyle: "medium", timeStyle: "short" });

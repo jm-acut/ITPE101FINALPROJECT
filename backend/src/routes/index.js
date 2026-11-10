@@ -3,6 +3,7 @@ import authRoutes from "./authRoutes.js";
 import productRoutes from "./productRoutes.js";
 import adminRoutes from "./adminRoutes.js";
 import cartRoutes from "./cartRoutes.js";
+import orderRoutes from "./orderRoutes.js";
 import supabase from "../config/database.js";
 import { ok } from "../utils/response.js";
 
@@ -17,6 +18,7 @@ router.get("/health", async (req, res) => {
 router.use("/auth", authRoutes);
 router.use("/admin", adminRoutes);
 router.use("/cart", cartRoutes);
+router.use("/orders", orderRoutes);
 router.use("/", productRoutes);
 
 export default router;

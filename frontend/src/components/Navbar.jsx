@@ -29,7 +29,7 @@ export default function Navbar() {
 
                 <nav className={`nav-links ${open ? "is-open" : ""}`} aria-label="Main">
                     <NavLink to="/" end>Home</NavLink>
-                    <NavLink to="/products">Shop</NavLink>
+                                        {user && <NavLink to="/orders">Orders</NavLink>}
                     {isAdmin && (
                         <NavLink to="/admin"><LayoutDashboard size={16} /> Admin</NavLink>
                     )}
