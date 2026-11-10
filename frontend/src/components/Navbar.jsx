@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Cpu, Search, ShoppingCart, Menu, X, LogOut, LayoutDashboard } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useCart } from "../context/CartContext.jsx";
 
 export default function Navbar() {
     const { user, isAdmin, logout } = useAuth();
+    const { cart } = useCart();
     const [open, setOpen] = useState(false);
     const { pathname } = useLocation();
     const navigate = useNavigate();
@@ -46,7 +48,14 @@ export default function Navbar() {
 
                 <div className="nav-actions">
                     <Link to="/products" className="icon-btn" aria-label="Search products"><Search size={20} /></Link>
-                    <Link to="/cart" className="icon-btn" aria-label="Shopping cart"><ShoppingCart size={20} /></Link>
+                    <Link
+                        to="/cart"
+                        className="icon-btn cart-link"
+                        aria-label={`Shopping cart, ${cart.itemCount} items`}
+                    >
+                        <ShoppingCart size={20} />
+                        {cart.itemCount > 0 && <span className="cart-badge">{cart.itemCount}</span>}
+                    </Link>
 
                     <div className="nav-account-desktop">
                         {user ? (

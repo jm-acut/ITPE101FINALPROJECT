@@ -4,6 +4,7 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Home from "./pages/Home.jsx";
 import Products from "./pages/Products.jsx";
 import ProductDetail from "./pages/ProductDetail.jsx";
+import Cart from "./pages/Cart.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import ComingSoon from "./pages/ComingSoon.jsx";
@@ -19,20 +20,21 @@ export default function App() {
                 <Route path="login" element={<Login />} />
                 <Route path="register" element={<Register />} />
 
-                {/* Placeholders: replaced in the next phases */}
                 <Route
                     path="cart"
                     element={
                         <ProtectedRoute>
-                            <ComingSoon title="Your cart" text="The cart and checkout are built in Phase 2." />
+                            <Cart />
                         </ProtectedRoute>
                     }
                 />
+
+                {/* Placeholder: built in a later stage */}
                 <Route
                     path="admin"
                     element={
                         <ProtectedRoute roles={["admin"]}>
-                            <ComingSoon title="Admin dashboard" text="The admin area is built in Phase 3." />
+                            <ComingSoon title="Admin dashboard" text="The admin area is built in a later phase." />
                         </ProtectedRoute>
                     }
                 />

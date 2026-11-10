@@ -1,20 +1,30 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { ChevronLeft, Minus, Plus, ShoppingCart } from "lucide-react";
 import { catalogApi, isAbort } from "../api/client.js";
+import { useAuth } from "../context/AuthContext.jsx";
+import { useCart } from "../context/CartContext.jsx";
 import { categoryIcon, formatPrice, SPEC_LABELS, stockStatus } from "../utils.js";
 
 export default function ProductDetail() {
     const { id } = useParams();
+    const { user } = useAuth();
+    const { addItem } = useCart();
+    const navigate = useNavigate();
+    const location = useLocation();
+
     const [product, setProduct] = useState(null);
     const [error, setError] = useState(null);
     const [quantity, setQuantity] = useState(1);
+    const [adding, setAdding] = useState(false);
+    const [feedback, setFeedback] = useState(null); // { type: "success" | "error", text }
 
     useEffect(() => {
         const controller = new AbortController();
         setProduct(null);
         setError(null);
         setQuantity(1);
+        setFeedback(null);
 
         catalogApi
             .product(id, controller.signal)
@@ -25,6 +35,23 @@ export default function ProductDetail() {
 
         return () => controller.abort();
     }, [id]);
+
+    const handleAdd = async () => {
+        if (!user) {
+            navigate("/login", { state: { from: location.pathname } });
+            return;
+        }
+        setAdding(true);
+        setFeedback(null);
+        try {
+            await addItem(product.id, quantity);
+            setFeedback({ type: "success", text: `Added ${quantity} to your cart.` });
+        } catch (err) {
+            setFeedback({ type: "error", text: err.message });
+        } finally {
+            setAdding(false);
+        }
+    };
 
     if (error) {
         const missing = error.status === 404 || error.status === 422;
@@ -44,6 +71,7 @@ export default function ProductDetail() {
     const Icon = categoryIcon(product.category?.slug);
     const status = stockStatus(product.stock);
     const maxQty = Math.min(product.stock, 99);
+    const soldOut = product.stock <= 0;
     const specs = Object.entries(product.specs ?? {});
 
     return (
@@ -71,21 +99,26 @@ export default function ProductDetail() {
 
                     <div className="buy-row">
                         <div className="stepper" role="group" aria-label="Quantity">
-                            <button onClick={() => setQuantity((q) => Math.max(1, q - 1))} disabled={quantity <= 1} aria-label="Decrease quantity">
+                            <button onClick={() => setQuantity((q) => Math.max(1, q - 1))} disabled={soldOut || quantity <= 1} aria-label="Decrease quantity">
                                 <Minus size={16} />
                             </button>
                             <span aria-live="polite">{quantity}</span>
-                            <button onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))} disabled={quantity >= maxQty} aria-label="Increase quantity">
+                            <button onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))} disabled={soldOut || quantity >= maxQty} aria-label="Increase quantity">
                                 <Plus size={16} />
                             </button>
                         </div>
 
-                        {/* Phase 2 connects this button to the server-side cart */}
-                        <button className="btn btn-primary btn-lg" disabled>
-                            <ShoppingCart size={18} /> Add to cart
+                        <button className="btn btn-primary btn-lg" onClick={handleAdd} disabled={soldOut || adding}>
+                            <ShoppingCart size={18} /> {soldOut ? "Out of stock" : adding ? "Adding..." : "Add to cart"}
                         </button>
                     </div>
-                    <p className="hint">Cart and checkout are built in the next phase.</p>
+
+                    {feedback && (
+                        <p className={`feedback feedback-${feedback.type}`} role="status">
+                            {feedback.text}{" "}
+                            {feedback.type === "success" && <Link to="/cart" className="link">View cart</Link>}
+                        </p>
+                    )}
 
                     {specs.length > 0 && (
                         <>

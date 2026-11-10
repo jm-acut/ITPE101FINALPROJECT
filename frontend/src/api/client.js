@@ -73,4 +73,12 @@ export const catalogApi = {
     product: (id, signal) => api.get(`/products/${id}`, { signal }).then(unwrap)
 };
 
+export const cartApi = {
+    get: () => api.get("/cart").then(unwrap),
+    add: (body) => api.post("/cart/items", body).then(unwrap),
+    setQuantity: (productId, quantity) => api.patch(`/cart/items/${productId}`, { quantity }).then(unwrap),
+    remove: (productId) => api.delete(`/cart/items/${productId}`).then(unwrap),
+    clear: () => api.delete("/cart").then(unwrap)
+};
+
 export default api;
