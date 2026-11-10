@@ -28,7 +28,7 @@ export const productController = {
     },
 
     async create(req, res) {
-        created(res, await productService.create(req.validated.body));
+               created(res, await productService.create(req.validated.body, req.user.id));
     },
 
     async update(req, res) {

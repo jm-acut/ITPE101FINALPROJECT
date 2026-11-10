@@ -2,7 +2,7 @@ import AppError from "../utils/AppError.js";
 import { orderRepository } from "../repositories/orderRepository.js";
 import { CUSTOMER_CANCELLABLE, assertTransition } from "../patterns/orderStateMachine.js";
 
-function toOrderDto(row) {
+export function toOrderDto(row) {
     const activeHolds = (row.reservations ?? []).filter((r) => r.status === "active");
     const expiresAt = activeHolds.length
         ? activeHolds.map((r) => r.expires_at).sort()[0]

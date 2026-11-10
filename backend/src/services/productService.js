@@ -1,6 +1,7 @@
 import AppError from "../utils/AppError.js";
 import { productRepository } from "../repositories/productRepository.js";
 import { categoryRepository } from "../repositories/categoryRepository.js";
+import { stockRepository } from "../repositories/stockRepository.js";
 
 // Database row -> API shape (camelCase, money in centavos)
 export const toProductDto = (row) => ({
@@ -83,10 +84,15 @@ export const productService = {
         return toProductDto(row);
     },
 
-    async create(body) {
+       // The first stock also goes through adjust_stock, so even the initial quantity is audited.
+    async create(body, actorId) {
         await assertCategory(body.categoryId);
         try {
-            return toProductDto(await productRepository.create(toRow(body)));
+            const created = await productRepository.create(toRow({ ...body, stock: 0 }));
+            if (body.stock > 0) {
+                await stockRepository.adjust(created.id, body.stock, "Initial stock", actorId);
+            }
+            return toProductDto(await productRepository.findById(created.id));
         } catch (error) {
             throw mapUniqueViolation(error);
         }

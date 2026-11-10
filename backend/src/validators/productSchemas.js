@@ -46,6 +46,13 @@ export const createProductSchema = z.object({
     isActive: base.isActive.default(true)
 });
 
+// Stock is NOT editable here. It changes only through POST /admin/products/:id/stock, which keeps an audit trail.
 export const updateProductSchema = z
-    .object(Object.fromEntries(Object.entries(base).map(([key, schema]) => [key, schema.optional()])))
+    .object(
+        Object.fromEntries(
+            Object.entries(base)
+                .filter(([key]) => key !== "stock")
+                .map(([key, schema]) => [key, schema.optional()])
+        )
+    )
     .refine((body) => Object.keys(body).length > 0, { message: "Send at least one field to update." });
