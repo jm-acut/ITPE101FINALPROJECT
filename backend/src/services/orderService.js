@@ -16,6 +16,7 @@ export function toOrderDto(row) {
         shippingCents: row.shipping_cents,
         totalCents: row.total_cents,
         currency: row.currency,
+        flagged: row.flagged,
         couponCode: row.coupon?.code ?? null,
         shipping: { name: row.shipping_name, phone: row.shipping_phone, address: row.shipping_address },
         items: (row.items ?? []).map((i) => ({

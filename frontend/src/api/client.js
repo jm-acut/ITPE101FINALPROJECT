@@ -87,7 +87,9 @@ export const orderApi = {
         api.post("/orders", body, { headers: { "Idempotency-Key": idempotencyKey } }).then(unwrap),
     list: (params) => api.get("/orders", { params }).then(unwrap),
     get: (id) => api.get(`/orders/${id}`).then(unwrap),
-    cancel: (id) => api.post(`/orders/${id}/cancel`).then(unwrap)
+    cancel: (id) => api.post(`/orders/${id}/cancel`).then(unwrap),
+    pay: (id) => api.post(`/orders/${id}/pay`).then(unwrap),
+    syncPayment: (id) => api.post(`/orders/${id}/sync-payment`).then(unwrap)
 };
 
 export default api;

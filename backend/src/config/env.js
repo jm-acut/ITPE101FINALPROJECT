@@ -12,8 +12,10 @@ const schema = z.object({
     JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters"),
     JWT_EXPIRES_IN: z.string().default("2h"),
     GEMINI_API_KEY: z.string().optional(),
-    PAYMONGO_SECRET_KEY: z.string().optional(),
-    PAYMONGO_WEBHOOK_SECRET: z.string().optional()
+    // Maya Checkout (sandbox by default)
+    MAYA_PUBLIC_KEY: z.string().optional(),
+    MAYA_SECRET_KEY: z.string().optional(),
+    MAYA_BASE_URL: z.url().default("https://pg-sandbox.paymaya.com")
 });
 
 const parsed = schema.safeParse(process.env);

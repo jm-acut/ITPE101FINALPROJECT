@@ -7,6 +7,7 @@ import { apiLimiter } from "./middleware/rateLimiter.js";
 import { notFoundHandler, errorHandler } from "./middleware/errorHandler.js";
 import AppError from "./utils/AppError.js";
 import routes from "./routes/index.js";
+import webhookRoutes from "./routes/webhookRoutes.js";
 
 // The app is exported without listening, so tests can call it directly.
 const app = express();
@@ -27,7 +28,9 @@ app.use(
     })
 );
 
-// Phase 2: the PayMongo webhook route must be mounted BEFORE this line using express.raw().
+// Webhooks need the RAW body, so they are mounted BEFORE express.json().
+app.use("/api/v1/webhooks", webhookRoutes);
+
 app.use(express.json({ limit: "100kb" }));
 
 app.get("/", (req, res) => {
