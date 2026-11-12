@@ -20,6 +20,7 @@ import AdminProducts from "./pages/admin/AdminProducts.jsx";
 import AdminOrders from "./pages/admin/AdminOrders.jsx";
 import AdminOrderDetail from "./pages/admin/AdminOrderDetail.jsx";
 import AdminCoupons from "./pages/admin/AdminCoupons.jsx";
+import Assistant from "./pages/Assistant.jsx";
 
 export default function App() {
     return (
@@ -34,6 +35,7 @@ export default function App() {
                 <Route path="register" element={<Register />} />
 
                 <Route path="builds" element={<ProtectedRoute><MyBuilds /></ProtectedRoute>} />
+                <Route path="assistant" element={<ProtectedRoute><Assistant /></ProtectedRoute>} />
                 <Route path="cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
                 <Route path="checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
                 <Route path="orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />

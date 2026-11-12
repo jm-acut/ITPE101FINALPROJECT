@@ -31,6 +31,7 @@ export default function Navbar() {
                     <NavLink to="/" end>Home</NavLink>
                     <NavLink to="/products">Shop</NavLink>
                     <NavLink to="/builder">Build PC</NavLink>
+                    <NavLink to="/assistant">AI advisor</NavLink>
                     {user && <NavLink to="/builds">My builds</NavLink>}
                     {user && <NavLink to="/orders">Orders</NavLink>}
                     {isAdmin && (

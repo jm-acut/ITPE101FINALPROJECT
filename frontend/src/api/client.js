@@ -122,4 +122,8 @@ export const adminApi = {
     deleteCoupon: (id) => api.delete(`/admin/coupons/${id}`).then(unwrap)
 };
 
+export const assistantApi = {
+    recommend: (body) => api.post("/assistant/recommend", body, { timeout: 45000 }).then(unwrap)
+};
+
 export default api;

@@ -11,7 +11,9 @@ const schema = z.object({
     SUPABASE_SERVICE_ROLE_KEY: z.string().min(20, "SUPABASE_SERVICE_ROLE_KEY is missing"),
     JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters"),
     JWT_EXPIRES_IN: z.string().default("2h"),
+    // AI assistant (Gemini)
     GEMINI_API_KEY: z.string().optional(),
+    GEMINI_MODEL: z.string().default("gemini-3.5-flash-lite"),
     // Maya Checkout (sandbox by default)
     MAYA_PUBLIC_KEY: z.string().optional(),
     MAYA_SECRET_KEY: z.string().optional(),

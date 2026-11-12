@@ -508,3 +508,11 @@ a.stat-card:hover { border-color: var(--blue); }
 @media (max-width: 620px) {
     .form-grid { grid-template-columns: 1fr; }
 }
+
+/* ---------- AI assistant ---------- */
+.ai-badge { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; background: var(--blue-50); color: var(--blue-600); font-size: .78rem; font-weight: 600; }
+.example-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.suggested-part { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.suggested-part > div:first-child { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.suggested-price { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; white-space: nowrap; }
+.reason { color: var(--muted); font-size: .86rem; line-height: 1.4; }

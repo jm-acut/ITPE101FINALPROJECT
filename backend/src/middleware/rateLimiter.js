@@ -1,13 +1,14 @@
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import env from "../config/env.js";
 
-function build({ windowMs, limit, code, message }) {
+function build({ windowMs, limit, code, message, keyGenerator }) {
     return rateLimit({
         windowMs,
         limit,
         standardHeaders: "draft-7",
         legacyHeaders: false,
         skip: () => env.isTest,
+        ...(keyGenerator ? { keyGenerator } : {}),
         handler: (req, res) =>
             res.status(429).json({
                 success: false,
@@ -16,6 +17,9 @@ function build({ windowMs, limit, code, message }) {
             })
     });
 }
+
+// Signed-in users are counted by account. Anyone else falls back to their IP address.
+const perUser = (req) => (req.user?.id ? `user:${req.user.id}` : ipKeyGenerator(req.ip));
 
 export const apiLimiter = build({
     windowMs: 15 * 60 * 1000,
@@ -31,10 +35,19 @@ export const authLimiter = build({
     message: "Too many sign-in attempts. Try again in a few minutes."
 });
 
-// Used later for the AI feature
+// AI: 8 requests per minute and 40 per day, per signed-in user.
 export const aiLimiter = build({
     windowMs: 60 * 1000,
     limit: 8,
     code: "AI_RATE_LIMITED",
-    message: "You are asking the assistant too quickly. Wait a moment."
+    message: "You are asking the assistant too quickly. Wait a moment and try again.",
+    keyGenerator: perUser
+});
+
+export const aiDailyLimiter = build({
+    windowMs: 24 * 60 * 60 * 1000,
+    limit: 40,
+    code: "AI_DAILY_LIMIT",
+    message: "You have reached today's limit for the assistant. Try again tomorrow.",
+    keyGenerator: perUser
 });

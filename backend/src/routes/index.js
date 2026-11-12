@@ -5,6 +5,7 @@ import adminRoutes from "./adminRoutes.js";
 import cartRoutes from "./cartRoutes.js";
 import orderRoutes from "./orderRoutes.js";
 import buildRoutes from "./buildRoutes.js";
+import assistantRoutes from "./assistantRoutes.js";
 import supabase from "../config/database.js";
 import { ok } from "../utils/response.js";
 
@@ -21,6 +22,7 @@ router.use("/admin", adminRoutes);
 router.use("/cart", cartRoutes);
 router.use("/orders", orderRoutes);
 router.use("/builds", buildRoutes);
+router.use("/assistant", assistantRoutes);
 router.use("/", productRoutes);
 
 export default router;
