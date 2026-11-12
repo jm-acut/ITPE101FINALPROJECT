@@ -48,6 +48,12 @@ export const productRepository = {
         if (error) throw error;
         return data;
     },
+        async findByIds(ids) {
+        if (ids.length === 0) return [];
+        const { data, error } = await supabase.from("products").select(SELECT).in("id", ids);
+        if (error) throw error;
+        return data;
+    },
 
     async create(row) {
         const { data, error } = await supabase.from("products").insert(row).select(SELECT).single();

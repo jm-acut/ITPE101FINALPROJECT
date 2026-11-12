@@ -92,4 +92,34 @@ export const orderApi = {
     syncPayment: (id) => api.post(`/orders/${id}/sync-payment`).then(unwrap)
 };
 
+export const buildApi = {
+    check: (partIds, signal) => api.post("/builds/check", { partIds }, { signal }).then(unwrap),
+    list: () => api.get("/builds").then(unwrap),
+    get: (id) => api.get(`/builds/${id}`).then(unwrap),
+    create: (body) => api.post("/builds", body).then(unwrap),
+    update: (id, body) => api.patch(`/builds/${id}`, body).then(unwrap),
+    remove: (id) => api.delete(`/builds/${id}`).then(unwrap),
+    share: (id) => api.post(`/builds/${id}/share`).then(unwrap),
+    unshare: (id) => api.delete(`/builds/${id}/share`).then(unwrap),
+    addToCart: (id) => api.post(`/builds/${id}/add-to-cart`).then(unwrap),
+    shared: (code) => api.get(`/builds/shared/${code}`).then(unwrap)
+};
+
+export const adminApi = {
+    dashboard: () => api.get("/admin/dashboard").then(unwrap),
+    products: (params) => api.get("/admin/products", { params: clean(params) }).then(unwrap),
+    createProduct: (body) => api.post("/admin/products", body).then(unwrap),
+    updateProduct: (id, body) => api.patch(`/admin/products/${id}`, body).then(unwrap),
+    deleteProduct: (id) => api.delete(`/admin/products/${id}`).then(unwrap),
+    adjustStock: (id, body) => api.post(`/admin/products/${id}/stock`, body).then(unwrap),
+    stockMovements: (id, params) => api.get(`/admin/products/${id}/stock-movements`, { params }).then(unwrap),
+    orders: (params) => api.get("/admin/orders", { params: clean(params) }).then(unwrap),
+    order: (id) => api.get(`/admin/orders/${id}`).then(unwrap),
+    setOrderStatus: (id, body) => api.patch(`/admin/orders/${id}/status`, body).then(unwrap),
+    coupons: (params) => api.get("/admin/coupons", { params }).then(unwrap),
+    createCoupon: (body) => api.post("/admin/coupons", body).then(unwrap),
+    updateCoupon: (id, body) => api.patch(`/admin/coupons/${id}`, body).then(unwrap),
+    deleteCoupon: (id) => api.delete(`/admin/coupons/${id}`).then(unwrap)
+};
+
 export default api;
