@@ -1,0 +1,2758 @@
+{
+  "info": {
+    "name": "NEXUS PC API",
+    "description": "Requests with assertions for every module, including negative cases. Run the folders in order with the 'NEXUS PC (local)' environment. The database must be seeded (npm run seed). No secrets are stored here: tokens are filled in by the login requests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{customerToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "regEmail",
+      "value": ""
+    },
+    {
+      "key": "productId",
+      "value": ""
+    },
+    {
+      "key": "orderId",
+      "value": ""
+    },
+    {
+      "key": "idemKey",
+      "value": ""
+    },
+    {
+      "key": "buildId",
+      "value": ""
+    },
+    {
+      "key": "shareCode",
+      "value": ""
+    },
+    {
+      "key": "couponId",
+      "value": ""
+    },
+    {
+      "key": "couponCode",
+      "value": ""
+    },
+    {
+      "key": "nowMs",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "00 System",
+      "item": [
+        {
+          "name": "Health check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Uses the success envelope\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(true); pm.expect(b).to.have.property(\"data\"); });",
+                  "pm.test(\"Database is connected\", () => { const b = pm.response.json(); pm.expect(b.data.database).to.eql(\"connected\"); });",
+                  "pm.test(\"Responds in under 5 seconds\", () => pm.expect(pm.response.responseTime).to.be.below(5000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "01 Auth",
+      "item": [
+        {
+          "name": "Register a new customer",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"regEmail\", \"postman-\" + Date.now() + \"@nexuspc.test\");"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Uses the success envelope\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(true); pm.expect(b).to.have.property(\"data\"); });",
+                  "pm.test(\"Role is customer and no password is returned\", () => { const b = pm.response.json(); pm.expect(b.data.user.role).to.eql(\"customer\"); pm.expect(JSON.stringify(b)).to.not.match(/password/i); });",
+                  "{ const b = pm.response.json(); pm.environment.set(\"otherToken\", b.data.token); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Tester\",\n  \"email\": \"{{regEmail}}\",\n  \"password\": \"Postman1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Register with the same email again (duplicate)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Error code is EMAIL_TAKEN and the error shape is correct\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); pm.expect(b.error.code).to.eql(\"EMAIL_TAKEN\"); pm.expect(b.error.message).to.be.a(\"string\"); pm.expect(b.requestId).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Tester\",\n  \"email\": \"{{regEmail}}\",\n  \"password\": \"Postman1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Register with invalid input",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Error code is VALIDATION_ERROR and the error shape is correct\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); pm.expect(b.error.code).to.eql(\"VALIDATION_ERROR\"); pm.expect(b.error.message).to.be.a(\"string\"); pm.expect(b.requestId).to.be.a(\"string\"); });",
+                  "pm.test(\"Lists the invalid fields\", () => { const b = pm.response.json(); const fields = b.error.details.map((d) => d.field); pm.expect(fields).to.include.members([\"name\", \"email\", \"password\"]); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"x\",\n  \"email\": \"not-an-email\",\n  \"password\": \"short\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Login as customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Uses the success envelope\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(true); pm.expect(b).to.have.property(\"data\"); });",
+                  "{ const b = pm.response.json(); pm.environment.set(\"customerToken\", b.data.token); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{customerEmail}}\",\n  \"password\": \"{{customerPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Login as admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Role is admin\", () => { const b = pm.response.json(); pm.expect(b.data.user.role).to.eql(\"admin\"); });",
+                  "{ const b = pm.response.json(); pm.environment.set(\"adminToken\", b.data.token); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Login with a wrong password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Error code is INVALID_CREDENTIALS and the error shape is correct\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); pm.expect(b.error.code).to.eql(\"INVALID_CREDENTIALS\"); pm.expect(b.error.message).to.be.a(\"string\"); pm.expect(b.requestId).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{customerEmail}}\",\n  \"password\": \"WrongPassword1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get my profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Returns the signed-in user\", () => { const b = pm.response.json(); pm.expect(b.data.user.email).to.eql(pm.environment.get(\"customerEmail\")); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get my profile without a token (unauthenticated)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Error code is UNAUTHENTICATED and the error shape is correct\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); pm.expect(b.error.code).to.eql(\"UNAUTHENTICATED\"); pm.expect(b.error.message).to.be.a(\"string\"); pm.expect(b.requestId).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 Catalog",
+      "item": [
+        {
+          "name": "List categories",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Has categories\", () => { const b = pm.response.json(); pm.expect(b.data).to.be.an(\"array\").that.is.not.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "categories"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Search products",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Returns products with pagination\", () => { const b = pm.response.json(); pm.expect(b.data).to.be.an(\"array\").that.is.not.empty; pm.expect(b.meta).to.have.property(\"totalPages\"); });",
+                  "{ const b = pm.response.json(); pm.collectionVariables.set(\"productId\", b.data[0].id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products?search=ryzen&sort=price_asc&limit=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "ryzen"
+                },
+                {
+                  "key": "sort",
+                  "value": "price_asc"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Get one product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Price is whole centavos\", () => { const b = pm.response.json(); pm.expect(Number.isInteger(b.data.priceCents)).to.eql(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                "{{productId}}"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Get a product that does not exist (not found)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Error code is PRODUCT_NOT_FOUND and the error shape is correct\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); pm.expect(b.error.code).to.eql(\"PRODUCT_NOT_FOUND\"); pm.expect(b.error.message).to.be.a(\"string\"); pm.expect(b.requestId).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products/00000000-0000-4000-8000-000000000000",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                "00000000-0000-4000-8000-000000000000"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Get a product with a malformed id (invalid input)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Error code is VALIDATION_ERROR and the error shape is correct\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); pm.expect(b.error.code).to.eql(\"VALIDATION_ERROR\"); pm.expect(b.error.message).to.be.a(\"string\"); pm.expect(b.requestId).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products/not-a-uuid",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                "not-a-uuid"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "List products with an invalid sort (invalid input)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Error code is VALIDATION_ERROR and the error shape is correct\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); pm.expect(b.error.code).to.eql(\"VALIDATION_ERROR\"); pm.expect(b.error.message).to.be.a(\"string\"); pm.expect(b.requestId).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products?sort=password_hash",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "sort",
+                  "value": "password_hash"
+                }
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 Cart",
+      "item": [
+        {
+          "name": "Empty my cart",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Cart is empty\", () => { const b = pm.response.json(); pm.expect(b.data.itemCount).to.eql(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cart"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add a product to the cart",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Cart has the item, priced by the server\", () => { const b = pm.response.json(); pm.expect(b.data.itemCount).to.eql(1); pm.expect(b.data.items[0].unitPriceCents).to.be.a(\"number\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/cart/items",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cart",
+                "items"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{productId}}\",\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Add more than is in stock (out of stock)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Error code is INSUFFICIENT_STOCK and the error shape is correct\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); pm.expect(b.error.code).to.eql(\"INSUFFICIENT_STOCK\"); pm.expect(b.error.message).to.be.a(\"string\"); pm.expect(b.requestId).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/cart/items",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cart",
+                "items"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{productId}}\",\n  \"quantity\": 50\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Add an item with an invalid quantity (invalid input)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Error code is VALIDATION_ERROR and the error shape is correct\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); pm.expect(b.error.code).to.eql(\"VALIDATION_ERROR\"); pm.expect(b.error.message).to.be.a(\"string\"); pm.expect(b.requestId).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/cart/items",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cart",
+                "items"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{productId}}\",\n  \"quantity\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Read my cart without a token (unauthenticated)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Error code is UNAUTHENTICATED and the error shape is correct\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); pm.expect(b.error.code).to.eql(\"UNAUTHENTICATED\"); pm.expect(b.error.message).to.be.a(\"string\"); pm.expect(b.requestId).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cart",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cart"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 Checkout and orders",
+      "item": [
+        {
+          "name": "Quote my cart",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Totals add up\", () => { const b = pm.response.json(); const d = b.data; pm.expect(d.totalCents).to.eql(d.subtotalCents - d.discountCents + d.shippingCents); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orders/quote",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders",
+                "quote"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Quote with an unknown coupon (invalid coupon)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Error code is COUPON_INVALID and the error shape is correct\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); pm.expect(b.error.code).to.eql(\"COUPON_INVALID\"); pm.expect(b.error.message).to.be.a(\"string\"); pm.expect(b.requestId).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orders/quote",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders",
+                "quote"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"couponCode\": \"NOSUCHCODE999\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Quote with an expired coupon (invalid coupon)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Error code is COUPON_EXPIRED and the error shape is correct\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); pm.expect(b.error.code).to.eql(\"COUPON_EXPIRED\"); pm.expect(b.error.message).to.be.a(\"string\"); pm.expect(b.requestId).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orders/quote",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders",
+                "quote"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"couponCode\": \"{{expiredCoupon}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Place an order",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"idemKey\", \"pm-\" + Date.now() + \"-\" + Math.random().toString(36).slice(2, 8));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Order is awaiting payment with a payment window\", () => { const b = pm.response.json(); pm.expect(b.data.status).to.eql(\"pending_payment\"); pm.expect(b.data.expiresAt).to.be.a(\"string\"); });",
+                  "{ const b = pm.response.json(); pm.collectionVariables.set(\"orderId\", b.data.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idemKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shipping\": {\n    \"name\": \"Postman Tester\",\n    \"phone\": \"09171234567\",\n    \"address\": \"123 Test Street, Barangay Uno, Iligan City\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Place the same order again (duplicate idempotency key)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Returns the SAME order, not a second one\", () => { const b = pm.response.json(); pm.expect(b.data.id).to.eql(pm.collectionVariables.get(\"orderId\")); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idemKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shipping\": {\n    \"name\": \"Postman Tester\",\n    \"phone\": \"09171234567\",\n    \"address\": \"123 Test Street, Barangay Uno, Iligan City\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Place an order without an Idempotency-Key (invalid input)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Error code is VALIDATION_ERROR and the error shape is correct\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); pm.expect(b.error.code).to.eql(\"VALIDATION_ERROR\"); pm.expect(b.error.message).to.be.a(\"string\"); pm.expect(b.requestId).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shipping\": {\n    \"name\": \"Postman Tester\",\n    \"phone\": \"09171234567\",\n    \"address\": \"123 Test Street, Barangay Uno, Iligan City\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Read my order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Is the order I placed\", () => { const b = pm.response.json(); pm.expect(b.data.id).to.eql(pm.collectionVariables.get(\"orderId\")); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orders/{{orderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders",
+                "{{orderId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Another customer reads my order (hidden)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Error code is ORDER_NOT_FOUND and the error shape is correct\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); pm.expect(b.error.code).to.eql(\"ORDER_NOT_FOUND\"); pm.expect(b.error.message).to.be.a(\"string\"); pm.expect(b.requestId).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orders/{{orderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders",
+                "{{orderId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{otherToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Read an order that does not exist (not found)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Error code is ORDER_NOT_FOUND and the error shape is correct\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); pm.expect(b.error.code).to.eql(\"ORDER_NOT_FOUND\"); pm.expect(b.error.message).to.be.a(\"string\"); pm.expect(b.requestId).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orders/00000000-0000-4000-8000-000000000000",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders",
+                "00000000-0000-4000-8000-000000000000"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List my orders",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Contains my order\", () => { const b = pm.response.json(); pm.expect(b.data.map((o) => o.id)).to.include(pm.collectionVariables.get(\"orderId\")); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orders?page=1&limit=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cancel my order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Order is cancelled\", () => { const b = pm.response.json(); pm.expect(b.data.status).to.eql(\"cancelled\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orders/{{orderId}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders",
+                "{{orderId}}",
+                "cancel"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cancel it again (not allowed)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Error code is ORDER_NOT_CANCELLABLE and the error shape is correct\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); pm.expect(b.error.code).to.eql(\"ORDER_NOT_CANCELLABLE\"); pm.expect(b.error.message).to.be.a(\"string\"); pm.expect(b.requestId).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orders/{{orderId}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders",
+                "{{orderId}}",
+                "cancel"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 Payments and webhook",
+      "item": [
+        {
+          "name": "Pay for a cancelled order (not payable)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Error code is ORDER_NOT_PAYABLE and the error shape is correct\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); pm.expect(b.error.code).to.eql(\"ORDER_NOT_PAYABLE\"); pm.expect(b.error.message).to.be.a(\"string\"); pm.expect(b.requestId).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orders/{{orderId}}/pay",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders",
+                "{{orderId}}",
+                "pay"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Webhook without a signature (invalid webhook signature)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Error code is INVALID_SIGNATURE and the error shape is correct\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); pm.expect(b.error.code).to.eql(\"INVALID_SIGNATURE\"); pm.expect(b.error.message).to.be.a(\"string\"); pm.expect(b.requestId).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhooks/maya",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhooks",
+                "maya"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"pm_pay_1\",\n  \"status\": \"PAYMENT_SUCCESS\",\n  \"amount\": 1,\n  \"currency\": \"PHP\",\n  \"requestReferenceNumber\": \"{{orderId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Webhook with a forged signature (invalid webhook signature)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"nowMs\", String(Date.now()));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Error code is INVALID_SIGNATURE and the error shape is correct\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); pm.expect(b.error.code).to.eql(\"INVALID_SIGNATURE\"); pm.expect(b.error.message).to.be.a(\"string\"); pm.expect(b.requestId).to.be.a(\"string\"); });",
+                  "pm.test(\"The order is still cancelled, not paid\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Maya-Webhook-Signature",
+                "value": "nonce=forged,v1=00ff00ff"
+              },
+              {
+                "key": "X-Maya-Webhook-Timestamp",
+                "value": "{{nowMs}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhooks/maya",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhooks",
+                "maya"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"pm_pay_2\",\n  \"status\": \"PAYMENT_SUCCESS\",\n  \"amount\": 1,\n  \"currency\": \"PHP\",\n  \"requestReferenceNumber\": \"{{orderId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 PC builds",
+      "item": [
+        {
+          "name": "Check parts for compatibility",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Returns a report\", () => { const b = pm.response.json(); pm.expect(b.data).to.have.property(\"compatible\"); pm.expect(b.data.issues).to.be.an(\"array\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/builds/check",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "builds",
+                "check"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"partIds\": [\n    \"{{productId}}\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Check with no parts (invalid input)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Error code is VALIDATION_ERROR and the error shape is correct\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); pm.expect(b.error.code).to.eql(\"VALIDATION_ERROR\"); pm.expect(b.error.message).to.be.a(\"string\"); pm.expect(b.requestId).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/builds/check",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "builds",
+                "check"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"partIds\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Save a build",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                  "{ const b = pm.response.json(); pm.collectionVariables.set(\"buildId\", b.data.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/builds",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "builds"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman build\",\n  \"partIds\": [\n    \"{{productId}}\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Another customer reads my build (hidden)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Error code is BUILD_NOT_FOUND and the error shape is correct\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); pm.expect(b.error.code).to.eql(\"BUILD_NOT_FOUND\"); pm.expect(b.error.message).to.be.a(\"string\"); pm.expect(b.requestId).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/builds/{{buildId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "builds",
+                "{{buildId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{otherToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Share my build",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "{ const b = pm.response.json(); pm.collectionVariables.set(\"shareCode\", b.data.shareCode); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/builds/{{buildId}}/share",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "builds",
+                "{{buildId}}",
+                "share"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Open the shared build (public)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Owner is not exposed\", () => { const b = pm.response.json(); pm.expect(JSON.stringify(b)).to.not.match(/email|userId|user_id/i); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/builds/shared/{{shareCode}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "builds",
+                "shared",
+                "{{shareCode}}"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Delete my build",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/builds/{{buildId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "builds",
+                "{{buildId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Open the shared build after deleting it (not found)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Error code is SHARE_NOT_FOUND and the error shape is correct\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); pm.expect(b.error.code).to.eql(\"SHARE_NOT_FOUND\"); pm.expect(b.error.message).to.be.a(\"string\"); pm.expect(b.requestId).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/builds/shared/{{shareCode}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "builds",
+                "shared",
+                "{{shareCode}}"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 AI assistant",
+      "item": [
+        {
+          "name": "Ask the assistant without a token (unauthenticated)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Error code is UNAUTHENTICATED and the error shape is correct\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); pm.expect(b.error.code).to.eql(\"UNAUTHENTICATED\"); pm.expect(b.error.message).to.be.a(\"string\"); pm.expect(b.requestId).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/assistant/recommend",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "assistant",
+                "recommend"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"A gaming PC for 1080p games\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Ask the assistant with a too-short request (invalid input)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Error code is VALIDATION_ERROR and the error shape is correct\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); pm.expect(b.error.code).to.eql(\"VALIDATION_ERROR\"); pm.expect(b.error.message).to.be.a(\"string\"); pm.expect(b.requestId).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/assistant/recommend",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "assistant",
+                "recommend"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"hi\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Ask the assistant for a build (needs a Gemini key)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is one of 200, 503\", () => pm.expect([200,503]).to.include(pm.response.code));",
+                  "pm.test(\"Either a grounded answer or a controlled fallback\", () => { const b = pm.response.json(); if (pm.response.code === 503) { pm.expect(b.error.code).to.eql(\"AI_UNAVAILABLE\"); } else { pm.expect([\"ok\", \"no_match\"]).to.include(b.data.status); pm.expect(b.data.aiAssisted).to.eql(true); } });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/assistant/recommend",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "assistant",
+                "recommend"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"A gaming PC for smooth 1080p games\",\n  \"budgetPesos\": 60000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 Admin",
+      "item": [
+        {
+          "name": "A customer opens the admin dashboard (forbidden)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 403\", () => pm.response.to.have.status(403));",
+                  "pm.test(\"Error code is FORBIDDEN and the error shape is correct\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); pm.expect(b.error.code).to.eql(\"FORBIDDEN\"); pm.expect(b.error.message).to.be.a(\"string\"); pm.expect(b.requestId).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/dashboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "dashboard"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Open the admin dashboard without a token (unauthenticated)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Error code is UNAUTHENTICATED and the error shape is correct\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); pm.expect(b.error.code).to.eql(\"UNAUTHENTICATED\"); pm.expect(b.error.message).to.be.a(\"string\"); pm.expect(b.requestId).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/dashboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "dashboard"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Admin dashboard",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Has the summary numbers\", () => { const b = pm.response.json(); pm.expect(b.data).to.include.keys(\"paidOrders\", \"grossSalesCents\", \"flaggedOrders\", \"lowStock\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/dashboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "dashboard"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin lists all products",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Paginated\", () => { const b = pm.response.json(); pm.expect(b.meta.limit).to.eql(5); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/products?status=all&limit=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "all"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin removes more stock than exists (stock cannot go negative)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Error code is STOCK_NEGATIVE and the error shape is correct\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); pm.expect(b.error.code).to.eql(\"STOCK_NEGATIVE\"); pm.expect(b.error.message).to.be.a(\"string\"); pm.expect(b.requestId).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/products/{{productId}}/stock",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "products",
+                "{{productId}}",
+                "stock"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"change\": -100000,\n  \"reason\": \"Postman negative stock test\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Admin lists orders",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Paginated\", () => { const b = pm.response.json(); pm.expect(b.meta).to.have.property(\"total\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/orders?limit=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "orders"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin reads an order that does not exist (not found)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Error code is ORDER_NOT_FOUND and the error shape is correct\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); pm.expect(b.error.code).to.eql(\"ORDER_NOT_FOUND\"); pm.expect(b.error.message).to.be.a(\"string\"); pm.expect(b.requestId).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/orders/00000000-0000-4000-8000-000000000000",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "orders",
+                "00000000-0000-4000-8000-000000000000"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin moves a cancelled order to shipped (illegal transition)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Error code is INVALID_TRANSITION and the error shape is correct\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); pm.expect(b.error.code).to.eql(\"INVALID_TRANSITION\"); pm.expect(b.error.message).to.be.a(\"string\"); pm.expect(b.requestId).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/orders/{{orderId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "orders",
+                "{{orderId}}",
+                "status"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"shipped\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Admin sets an order to paid by hand (system only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Error code is SYSTEM_STATUS and the error shape is correct\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); pm.expect(b.error.code).to.eql(\"SYSTEM_STATUS\"); pm.expect(b.error.message).to.be.a(\"string\"); pm.expect(b.requestId).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/orders/{{orderId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "orders",
+                "{{orderId}}",
+                "status"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"paid\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Admin creates a coupon",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"couponCode\", \"PM\" + Date.now().toString(36).toUpperCase());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Code is stored in capitals\", () => { const b = pm.response.json(); pm.expect(b.data.code).to.eql(pm.collectionVariables.get(\"couponCode\")); });",
+                  "{ const b = pm.response.json(); pm.collectionVariables.set(\"couponId\", b.data.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/coupons",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "coupons"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{couponCode}}\",\n  \"type\": \"percentage\",\n  \"value\": 15,\n  \"minSpendCents\": 100000,\n  \"usageLimit\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Admin creates the same coupon again (duplicate)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Error code is COUPON_CODE_TAKEN and the error shape is correct\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); pm.expect(b.error.code).to.eql(\"COUPON_CODE_TAKEN\"); pm.expect(b.error.message).to.be.a(\"string\"); pm.expect(b.requestId).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/coupons",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "coupons"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{couponCode}}\",\n  \"type\": \"percentage\",\n  \"value\": 15\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Admin creates a coupon of 150 percent (invalid input)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Error code is VALIDATION_ERROR and the error shape is correct\", () => { const b = pm.response.json(); pm.expect(b.success).to.eql(false); pm.expect(b.error.code).to.eql(\"VALIDATION_ERROR\"); pm.expect(b.error.message).to.be.a(\"string\"); pm.expect(b.requestId).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/coupons",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "coupons"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"TOOBIG150\",\n  \"type\": \"percentage\",\n  \"value\": 150\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Admin deletes the coupon",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/coupons/{{couponId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "coupons",
+                "{{couponId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

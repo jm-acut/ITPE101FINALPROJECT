@@ -1,0 +1,4731 @@
+openapi: 3.0.3
+info:
+  title: NEXUS PC API
+  version: 1.0.0
+  description: |-
+    REST API for the NEXUS PC store: catalog, cart, checkout, Maya payments, admin tools, PC compatibility checks, build saving and sharing, and an AI build advisor.
+
+    **Conventions**
+    - Success: `{ "success": true, "data": ..., "meta": ... }`. Errors: `{ "success": false, "error": { "code", "message", "details" }, "requestId" }`.
+    - Money is always an integer number of centavos (`1399000` = PHP 13,990.00). Prices are calculated on the server.
+    - Authenticated routes need `Authorization: Bearer <token>` (use the Authorize button). Admin routes need an admin token.
+    - Lists are paginated with `page` and `limit`.
+servers:
+  - url: /api/v1
+    description: This server
+  - url: http://localhost:5000/api/v1
+    description: Local development
+tags:
+  - name: System
+  - name: Auth
+  - name: Catalog
+  - name: Cart
+  - name: Orders
+  - name: Payments
+  - name: Builds
+  - name: AI assistant
+  - name: Admin
+paths:
+  /health:
+    get:
+      tags:
+        - System
+      operationId: health
+      summary: Check that the API and database are up
+      security: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Health"
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  status: ok
+                  database: connected
+  /auth/register:
+    post:
+      tags:
+        - Auth
+      operationId: register
+      summary: Create a customer account
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
+            example:
+              name: Juan Dela Cruz
+              email: juan@nexuspc.test
+              password: Secret1234
+      responses:
+        "201":
+          description: Account created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/AuthResult"
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  user:
+                    id: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                    name: Juan Dela Cruz
+                    email: juan@nexuspc.test
+                    role: customer
+                    createdAt: 2026-11-12T08:30:00.000Z
+                  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        "409":
+          description: "Error 409: EMAIL_TAKEN"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: EMAIL_TAKEN
+                  message: An account with this email already exists.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          description: "Error 429: AUTH_RATE_LIMITED"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: AUTH_RATE_LIMITED
+                  message: Too many sign-in attempts. Try again in a few minutes.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      operationId: login
+      summary: Sign in and receive a token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+            example:
+              email: juan@nexuspc.test
+              password: Customer1234
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/AuthResult"
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  user:
+                    id: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                    name: Juan Dela Cruz
+                    email: juan@nexuspc.test
+                    role: customer
+                    createdAt: 2026-11-12T08:30:00.000Z
+                  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        "401":
+          description: "Error 401: INVALID_CREDENTIALS"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: INVALID_CREDENTIALS
+                  message: Invalid email or password.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          description: "Error 429: AUTH_RATE_LIMITED"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: AUTH_RATE_LIMITED
+                  message: Too many sign-in attempts. Try again in a few minutes.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+  /auth/me:
+    get:
+      tags:
+        - Auth
+      operationId: me
+      summary: Get the signed-in user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        $ref: "#/components/schemas/User"
+                    required:
+                      - user
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  user:
+                    id: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                    name: Juan Dela Cruz
+                    email: juan@nexuspc.test
+                    role: customer
+                    createdAt: 2026-11-12T08:30:00.000Z
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /categories:
+    get:
+      tags:
+        - Catalog
+      operationId: listCategories
+      summary: List product categories
+      security: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Category"
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  - id: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+                    name: Processors
+                    slug: processors
+                    description: Desktop CPUs.
+  /products:
+    get:
+      tags:
+        - Catalog
+      operationId: listProducts
+      summary: Search and filter active products
+      description: Only active products are returned.
+      security: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: Page number.
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          required: false
+          description: Items per page.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 12
+        - name: search
+          in: query
+          required: false
+          description: Matches product name or brand.
+          schema:
+            type: string
+            maxLength: 60
+        - name: category
+          in: query
+          required: false
+          description: Category slug, for example processors.
+          schema:
+            type: string
+        - name: minPriceCents
+          in: query
+          required: false
+          description: Minimum price in centavos.
+          schema:
+            type: integer
+            minimum: 0
+        - name: maxPriceCents
+          in: query
+          required: false
+          description: Maximum price in centavos.
+          schema:
+            type: integer
+            minimum: 0
+        - name: sort
+          in: query
+          required: false
+          description: Sort order (fixed list).
+          schema:
+            type: string
+            enum:
+              - newest
+              - price_asc
+              - price_desc
+              - name_asc
+            default: newest
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Product"
+                  meta:
+                    $ref: "#/components/schemas/PageMeta"
+                required:
+                  - success
+                  - data
+                  - meta
+              example:
+                success: true
+                data:
+                  - id: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                    name: AMD Ryzen 5 7600
+                    brand: AMD
+                    description: 6-core Zen 4 processor.
+                    priceCents: 1399000
+                    stock: 25
+                    imageUrl: null
+                    specs:
+                      socket: AM5
+                      cores: 6
+                      tdp: 65
+                      ramType: DDR5
+                    isActive: true
+                    category:
+                      id: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+                      name: Processors
+                      slug: processors
+                    createdAt: 2026-11-12T08:30:00.000Z
+                    updatedAt: 2026-11-12T08:30:00.000Z
+                meta:
+                  total: 24
+                  page: 1
+                  limit: 12
+                  totalPages: 1
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /products/{id}:
+    get:
+      tags:
+        - Catalog
+      operationId: getProduct
+      summary: Get one active product
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Resource id.
+          schema:
+            type: string
+            format: uuid
+            example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Product"
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  id: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                  name: AMD Ryzen 5 7600
+                  brand: AMD
+                  description: 6-core Zen 4 processor.
+                  priceCents: 1399000
+                  stock: 25
+                  imageUrl: null
+                  specs:
+                    socket: AM5
+                    cores: 6
+                    tdp: 65
+                    ramType: DDR5
+                  isActive: true
+                  category:
+                    id: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+                    name: Processors
+                    slug: processors
+                  createdAt: 2026-11-12T08:30:00.000Z
+                  updatedAt: 2026-11-12T08:30:00.000Z
+        "404":
+          description: "Error 404: PRODUCT_NOT_FOUND"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: PRODUCT_NOT_FOUND
+                  message: Product not found.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /cart:
+    get:
+      tags:
+        - Cart
+      operationId: getCart
+      summary: Get my cart
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Cart"
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  items:
+                    - productId: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                      name: AMD Ryzen 5 7600
+                      brand: AMD
+                      imageUrl: null
+                      categorySlug: processors
+                      unitPriceCents: 1399000
+                      quantity: 1
+                      lineTotalCents: 1399000
+                      stock: 25
+                      issue: null
+                  itemCount: 1
+                  subtotalCents: 1399000
+                  hasIssues: false
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    delete:
+      tags:
+        - Cart
+      operationId: clearCart
+      summary: Empty my cart
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Cart"
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  items: []
+                  itemCount: 0
+                  subtotalCents: 0
+                  hasIssues: false
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /cart/items:
+    post:
+      tags:
+        - Cart
+      operationId: addCartItem
+      summary: Add a product to my cart
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CartAddInput"
+            example:
+              productId: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+              quantity: 1
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Cart"
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  items:
+                    - productId: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                      name: AMD Ryzen 5 7600
+                      brand: AMD
+                      imageUrl: null
+                      categorySlug: processors
+                      unitPriceCents: 1399000
+                      quantity: 1
+                      lineTotalCents: 1399000
+                      stock: 25
+                      issue: null
+                  itemCount: 1
+                  subtotalCents: 1399000
+                  hasIssues: false
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: "Error 404: PRODUCT_NOT_FOUND"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: PRODUCT_NOT_FOUND
+                  message: Product not found.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "409":
+          description: "Error 409: INSUFFICIENT_STOCK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: INSUFFICIENT_STOCK
+                  message: Only 3 left in stock.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /cart/items/{productId}:
+    patch:
+      tags:
+        - Cart
+      operationId: setCartItemQuantity
+      summary: Change the quantity of a cart item
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          description: Product id.
+          schema:
+            type: string
+            format: uuid
+            example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CartQuantityInput"
+            example:
+              quantity: 2
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Cart"
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  items:
+                    - productId: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                      name: AMD Ryzen 5 7600
+                      brand: AMD
+                      imageUrl: null
+                      categorySlug: processors
+                      unitPriceCents: 1399000
+                      quantity: 1
+                      lineTotalCents: 1399000
+                      stock: 25
+                      issue: null
+                  itemCount: 1
+                  subtotalCents: 1399000
+                  hasIssues: false
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: "Error 404: CART_ITEM_NOT_FOUND"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: CART_ITEM_NOT_FOUND
+                  message: That item is not in your cart.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "409":
+          description: "Error 409: INSUFFICIENT_STOCK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: INSUFFICIENT_STOCK
+                  message: Only 3 left in stock.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "422":
+          $ref: "#/components/responses/ValidationError"
+    delete:
+      tags:
+        - Cart
+      operationId: removeCartItem
+      summary: Remove an item from my cart
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          description: Product id.
+          schema:
+            type: string
+            format: uuid
+            example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Cart"
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  items: []
+                  itemCount: 0
+                  subtotalCents: 0
+                  hasIssues: false
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /orders/quote:
+    post:
+      tags:
+        - Orders
+      operationId: quoteOrder
+      summary: Price my cart with an optional coupon
+      description: Prices always come from the database.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuoteInput"
+            example:
+              couponCode: WELCOME10
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/QuoteResult"
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  subtotalCents: 1399000
+                  discountCents: 139900
+                  shippingCents: 0
+                  totalCents: 1259100
+                  coupon:
+                    couponId: b8d4e6f0-1a2b-4c3d-8e4f-5a6b7c8d9e0f
+                    code: WELCOME10
+                    discountCents: 139900
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          description: "Error 409: CART_EMPTY"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: CART_EMPTY
+                  message: Your cart is empty.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "422":
+          description: "Error 422: COUPON_EXPIRED"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: COUPON_EXPIRED
+                  message: This coupon has expired.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+  /orders:
+    post:
+      tags:
+        - Orders
+      operationId: createOrder
+      summary: Place an order from my cart
+      description: Reserves stock for 15 minutes. Needs an Idempotency-Key header. Repeating the same key returns the original order with status 200.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: Unique per checkout attempt, 8-100 characters (letters, numbers, - or _). Repeating the same key returns the same order.
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9_-]{8,100}$
+            example: 5b1c7c0e-9f55-4a0f-8a0e-2d1f4b7c9a11
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderInput"
+            example:
+              shipping:
+                name: Juan Dela Cruz
+                phone: "09171234567"
+                address: 123 Rizal St, Barangay Uno, Iligan City
+              couponCode: WELCOME10
+      responses:
+        "200":
+          description: "Same Idempotency-Key repeated: the original order"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Order"
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  id: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                  status: pending_payment
+                  subtotalCents: 1399000
+                  discountCents: 0
+                  shippingCents: 0
+                  totalCents: 1399000
+                  currency: PHP
+                  couponCode: null
+                  flagged: false
+                  shipping:
+                    name: Juan Dela Cruz
+                    phone: "09171234567"
+                    address: 123 Rizal St, Barangay Uno, Iligan City
+                  items:
+                    - productId: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                      name: AMD Ryzen 5 7600
+                      unitPriceCents: 1399000
+                      quantity: 1
+                      lineTotalCents: 1399000
+                  history:
+                    - from: null
+                      to: pending_payment
+                      note: Order placed
+                      createdAt: 2026-11-12T08:30:00.000Z
+                  expiresAt: 2026-11-12T08:45:00.000Z
+                  createdAt: 2026-11-12T08:30:00.000Z
+        "201":
+          description: Order created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Order"
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  id: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                  status: pending_payment
+                  subtotalCents: 1399000
+                  discountCents: 0
+                  shippingCents: 0
+                  totalCents: 1399000
+                  currency: PHP
+                  couponCode: null
+                  flagged: false
+                  shipping:
+                    name: Juan Dela Cruz
+                    phone: "09171234567"
+                    address: 123 Rizal St, Barangay Uno, Iligan City
+                  items:
+                    - productId: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                      name: AMD Ryzen 5 7600
+                      unitPriceCents: 1399000
+                      quantity: 1
+                      lineTotalCents: 1399000
+                  history:
+                    - from: null
+                      to: pending_payment
+                      note: Order placed
+                      createdAt: 2026-11-12T08:30:00.000Z
+                  expiresAt: 2026-11-12T08:45:00.000Z
+                  createdAt: 2026-11-12T08:30:00.000Z
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          description: "Error 409: INSUFFICIENT_STOCK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: INSUFFICIENT_STOCK
+                  message: Only 0 of AMD Ryzen 5 7600 left in stock.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "422":
+          $ref: "#/components/responses/ValidationError"
+    get:
+      tags:
+        - Orders
+      operationId: listOrders
+      summary: List my orders
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: Page number.
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          required: false
+          description: Items per page.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/OrderSummary"
+                  meta:
+                    $ref: "#/components/schemas/PageMeta"
+                required:
+                  - success
+                  - data
+                  - meta
+              example:
+                success: true
+                data:
+                  - id: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                    status: paid
+                    totalCents: 1399000
+                    itemCount: 1
+                    createdAt: 2026-11-12T08:30:00.000Z
+                meta:
+                  total: 1
+                  page: 1
+                  limit: 12
+                  totalPages: 1
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /orders/{id}:
+    get:
+      tags:
+        - Orders
+      operationId: getOrder
+      summary: Get one of my orders
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Resource id.
+          schema:
+            type: string
+            format: uuid
+            example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Order"
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  id: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                  status: pending_payment
+                  subtotalCents: 1399000
+                  discountCents: 0
+                  shippingCents: 0
+                  totalCents: 1399000
+                  currency: PHP
+                  couponCode: null
+                  flagged: false
+                  shipping:
+                    name: Juan Dela Cruz
+                    phone: "09171234567"
+                    address: 123 Rizal St, Barangay Uno, Iligan City
+                  items:
+                    - productId: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                      name: AMD Ryzen 5 7600
+                      unitPriceCents: 1399000
+                      quantity: 1
+                      lineTotalCents: 1399000
+                  history:
+                    - from: null
+                      to: pending_payment
+                      note: Order placed
+                      createdAt: 2026-11-12T08:30:00.000Z
+                  expiresAt: 2026-11-12T08:45:00.000Z
+                  createdAt: 2026-11-12T08:30:00.000Z
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: "Error 404: ORDER_NOT_FOUND"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: ORDER_NOT_FOUND
+                  message: Order not found.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /orders/{id}/cancel:
+    post:
+      tags:
+        - Orders
+      operationId: cancelOrder
+      summary: Cancel an unpaid order
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Resource id.
+          schema:
+            type: string
+            format: uuid
+            example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Order"
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  id: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                  status: cancelled
+                  subtotalCents: 1399000
+                  discountCents: 0
+                  shippingCents: 0
+                  totalCents: 1399000
+                  currency: PHP
+                  couponCode: null
+                  flagged: false
+                  shipping:
+                    name: Juan Dela Cruz
+                    phone: "09171234567"
+                    address: 123 Rizal St, Barangay Uno, Iligan City
+                  items:
+                    - productId: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                      name: AMD Ryzen 5 7600
+                      unitPriceCents: 1399000
+                      quantity: 1
+                      lineTotalCents: 1399000
+                  history:
+                    - from: null
+                      to: pending_payment
+                      note: Order placed
+                      createdAt: 2026-11-12T08:30:00.000Z
+                  expiresAt: 2026-11-12T08:45:00.000Z
+                  createdAt: 2026-11-12T08:30:00.000Z
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: "Error 404: ORDER_NOT_FOUND"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: ORDER_NOT_FOUND
+                  message: Order not found.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "409":
+          description: "Error 409: ORDER_NOT_CANCELLABLE"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: ORDER_NOT_CANCELLABLE
+                  message: This order can no longer be cancelled.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /orders/{id}/pay:
+    post:
+      tags:
+        - Payments
+      operationId: payOrder
+      summary: Start a Maya checkout for an unpaid order
+      description: Returns the hosted payment page address. Clicking twice returns the same session.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Resource id.
+          schema:
+            type: string
+            format: uuid
+            example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/PaymentLink"
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  checkoutUrl: https://payments-web-sandbox.paymaya.com/v2/checkout?id=abc
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: "Error 404: ORDER_NOT_FOUND"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: ORDER_NOT_FOUND
+                  message: Order not found.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "409":
+          description: "Error 409: ORDER_NOT_PAYABLE"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: ORDER_NOT_PAYABLE
+                  message: This order is not awaiting payment.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "502":
+          description: "Error 502: PAYMENT_PROVIDER_ERROR"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: PAYMENT_PROVIDER_ERROR
+                  message: The payment provider rejected this payment request.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "503":
+          description: "Error 503: PAYMENT_NOT_CONFIGURED"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: PAYMENT_NOT_CONFIGURED
+                  message: Online payment is not configured on this server.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+  /orders/{id}/sync-payment:
+    post:
+      tags:
+        - Payments
+      operationId: syncPayment
+      summary: Ask the payment provider whether the order was paid
+      description: Recovery path for a missed webhook. Uses the same safe database function as the webhook.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Resource id.
+          schema:
+            type: string
+            format: uuid
+            example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Order"
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  id: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                  status: paid
+                  subtotalCents: 1399000
+                  discountCents: 0
+                  shippingCents: 0
+                  totalCents: 1399000
+                  currency: PHP
+                  couponCode: null
+                  flagged: false
+                  shipping:
+                    name: Juan Dela Cruz
+                    phone: "09171234567"
+                    address: 123 Rizal St, Barangay Uno, Iligan City
+                  items:
+                    - productId: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                      name: AMD Ryzen 5 7600
+                      unitPriceCents: 1399000
+                      quantity: 1
+                      lineTotalCents: 1399000
+                  history:
+                    - from: null
+                      to: pending_payment
+                      note: Order placed
+                      createdAt: 2026-11-12T08:30:00.000Z
+                  expiresAt: 2026-11-12T08:45:00.000Z
+                  createdAt: 2026-11-12T08:30:00.000Z
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: "Error 404: ORDER_NOT_FOUND"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: ORDER_NOT_FOUND
+                  message: Order not found.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "502":
+          description: "Error 502: PAYMENT_PROVIDER_ERROR"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: PAYMENT_PROVIDER_ERROR
+                  message: Could not check the payment status. Please try again.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+  /webhooks/maya:
+    post:
+      tags:
+        - Payments
+      operationId: mayaWebhook
+      summary: Receive Maya payment events (called by Maya, not by the frontend)
+      description: The signature (RSA-SHA256 over the sorted flattened payload plus the nonce) and a 5-minute timestamp window are verified before anything changes. The response is NOT wrapped in the usual envelope.
+      security: []
+      parameters:
+        - name: X-Maya-Webhook-Signature
+          in: header
+          required: true
+          description: nonce=<nonce>,v1=<hex signature>
+          schema:
+            type: string
+            example: nonce=abc123,v1=9f8e7d...
+        - name: X-Maya-Webhook-Timestamp
+          in: header
+          required: true
+          description: Unix time in milliseconds.
+          schema:
+            type: string
+            example: "1794470000000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Maya payment object.
+              additionalProperties: true
+            example:
+              id: pay_123
+              isPaid: true
+              status: PAYMENT_SUCCESS
+              amount: 13990
+              currency: PHP
+              requestReferenceNumber: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+      responses:
+        "200":
+          description: Event processed, duplicate, or ignored
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookResult"
+              example:
+                received: true
+                outcome: paid
+        "400":
+          description: "Error 400: INVALID_JSON"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: INVALID_JSON
+                  message: Webhook body is not valid JSON.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "401":
+          description: "Error 401: INVALID_SIGNATURE"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: INVALID_SIGNATURE
+                  message: Webhook signature does not match.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "503":
+          description: "Error 503: PAYMENT_NOT_CONFIGURED"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: PAYMENT_NOT_CONFIGURED
+                  message: Online payment is not configured on this server.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+  /builds/check:
+    post:
+      tags:
+        - Builds
+      operationId: checkBuild
+      summary: Check whether parts work together
+      description: "Public. Rules: socket, memory type, power supply, part limits."
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PartIdsInput"
+            example:
+              partIds:
+                - 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                - 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/CompatibilityReport"
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  compatible: false
+                  complete: false
+                  issues:
+                    - code: SOCKET_MISMATCH
+                      severity: error
+                      message: AMD Ryzen 5 7600 uses socket AM5, but ASUS TUF B550 uses socket AM4.
+                      partIds:
+                        - 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                        - 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+                  summary:
+                    partCount: 2
+                    totalPriceCents: 2589000
+                    estimatedWatts: 140
+                    recommendedPsuW: 200
+                    psuWattage: null
+                  parts:
+                    - id: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                      name: AMD Ryzen 5 7600
+                      brand: AMD
+                      description: 6-core Zen 4 processor.
+                      priceCents: 1399000
+                      stock: 25
+                      imageUrl: null
+                      specs:
+                        socket: AM5
+                        cores: 6
+                        tdp: 65
+                        ramType: DDR5
+                      isActive: true
+                      category:
+                        id: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+                        name: Processors
+                        slug: processors
+                      createdAt: 2026-11-12T08:30:00.000Z
+                      updatedAt: 2026-11-12T08:30:00.000Z
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /builds/shared/{code}:
+    get:
+      tags:
+        - Builds
+      operationId: getSharedBuild
+      summary: Open a shared build (read-only)
+      description: Hides the owner. Prices and stock are live.
+      security: []
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: Share code of a build.
+          schema:
+            type: string
+            pattern: ^[A-Za-z0-9_-]{8,16}$
+            example: Xk3p9QmZ7aB
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/SharedBuild"
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  name: My 1080p build
+                  createdAt: 2026-11-12T08:30:00.000Z
+                  compatible: false
+                  complete: false
+                  issues:
+                    - code: SOCKET_MISMATCH
+                      severity: error
+                      message: AMD Ryzen 5 7600 uses socket AM5, but ASUS TUF B550 uses socket AM4.
+                      partIds:
+                        - 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                        - 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+                  summary:
+                    partCount: 2
+                    totalPriceCents: 2589000
+                    estimatedWatts: 140
+                    recommendedPsuW: 200
+                    psuWattage: null
+                  parts:
+                    - id: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                      name: AMD Ryzen 5 7600
+                      brand: AMD
+                      description: 6-core Zen 4 processor.
+                      priceCents: 1399000
+                      stock: 25
+                      imageUrl: null
+                      specs:
+                        socket: AM5
+                        cores: 6
+                        tdp: 65
+                        ramType: DDR5
+                      isActive: true
+                      category:
+                        id: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+                        name: Processors
+                        slug: processors
+                      createdAt: 2026-11-12T08:30:00.000Z
+                      updatedAt: 2026-11-12T08:30:00.000Z
+        "404":
+          description: "Error 404: SHARE_NOT_FOUND"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: SHARE_NOT_FOUND
+                  message: This shared build does not exist or is no longer shared.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /builds:
+    get:
+      tags:
+        - Builds
+      operationId: listBuilds
+      summary: List my saved builds
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Build"
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  - id: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                    name: My 1080p build
+                    partIds:
+                      - 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                    shareCode: null
+                    createdAt: 2026-11-12T08:30:00.000Z
+                    updatedAt: 2026-11-12T08:30:00.000Z
+                    compatible: false
+                    complete: false
+                    issues:
+                      - code: SOCKET_MISMATCH
+                        severity: error
+                        message: AMD Ryzen 5 7600 uses socket AM5, but ASUS TUF B550 uses socket AM4.
+                        partIds:
+                          - 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                          - 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+                    summary:
+                      partCount: 2
+                      totalPriceCents: 2589000
+                      estimatedWatts: 140
+                      recommendedPsuW: 200
+                      psuWattage: null
+                    parts:
+                      - id: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                        name: AMD Ryzen 5 7600
+                        brand: AMD
+                        description: 6-core Zen 4 processor.
+                        priceCents: 1399000
+                        stock: 25
+                        imageUrl: null
+                        specs:
+                          socket: AM5
+                          cores: 6
+                          tdp: 65
+                          ramType: DDR5
+                        isActive: true
+                        category:
+                          id: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+                          name: Processors
+                          slug: processors
+                        createdAt: 2026-11-12T08:30:00.000Z
+                        updatedAt: 2026-11-12T08:30:00.000Z
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      tags:
+        - Builds
+      operationId: createBuild
+      summary: Save a build
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BuildInput"
+            example:
+              name: My 1080p build
+              partIds:
+                - 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+      responses:
+        "201":
+          description: Build saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Build"
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  id: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                  name: My 1080p build
+                  partIds:
+                    - 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                  shareCode: null
+                  createdAt: 2026-11-12T08:30:00.000Z
+                  updatedAt: 2026-11-12T08:30:00.000Z
+                  compatible: false
+                  complete: false
+                  issues:
+                    - code: SOCKET_MISMATCH
+                      severity: error
+                      message: AMD Ryzen 5 7600 uses socket AM5, but ASUS TUF B550 uses socket AM4.
+                      partIds:
+                        - 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                        - 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+                  summary:
+                    partCount: 2
+                    totalPriceCents: 2589000
+                    estimatedWatts: 140
+                    recommendedPsuW: 200
+                    psuWattage: null
+                  parts:
+                    - id: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                      name: AMD Ryzen 5 7600
+                      brand: AMD
+                      description: 6-core Zen 4 processor.
+                      priceCents: 1399000
+                      stock: 25
+                      imageUrl: null
+                      specs:
+                        socket: AM5
+                        cores: 6
+                        tdp: 65
+                        ramType: DDR5
+                      isActive: true
+                      category:
+                        id: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+                        name: Processors
+                        slug: processors
+                      createdAt: 2026-11-12T08:30:00.000Z
+                      updatedAt: 2026-11-12T08:30:00.000Z
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          description: "Error 409: BUILD_LIMIT"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: BUILD_LIMIT
+                  message: You can save at most 20 builds. Delete one first.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /builds/{id}:
+    get:
+      tags:
+        - Builds
+      operationId: getBuild
+      summary: Get one of my builds
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Resource id.
+          schema:
+            type: string
+            format: uuid
+            example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Build"
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  id: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                  name: My 1080p build
+                  partIds:
+                    - 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                  shareCode: null
+                  createdAt: 2026-11-12T08:30:00.000Z
+                  updatedAt: 2026-11-12T08:30:00.000Z
+                  compatible: false
+                  complete: false
+                  issues:
+                    - code: SOCKET_MISMATCH
+                      severity: error
+                      message: AMD Ryzen 5 7600 uses socket AM5, but ASUS TUF B550 uses socket AM4.
+                      partIds:
+                        - 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                        - 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+                  summary:
+                    partCount: 2
+                    totalPriceCents: 2589000
+                    estimatedWatts: 140
+                    recommendedPsuW: 200
+                    psuWattage: null
+                  parts:
+                    - id: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                      name: AMD Ryzen 5 7600
+                      brand: AMD
+                      description: 6-core Zen 4 processor.
+                      priceCents: 1399000
+                      stock: 25
+                      imageUrl: null
+                      specs:
+                        socket: AM5
+                        cores: 6
+                        tdp: 65
+                        ramType: DDR5
+                      isActive: true
+                      category:
+                        id: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+                        name: Processors
+                        slug: processors
+                      createdAt: 2026-11-12T08:30:00.000Z
+                      updatedAt: 2026-11-12T08:30:00.000Z
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: "Error 404: BUILD_NOT_FOUND"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: BUILD_NOT_FOUND
+                  message: Build not found.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "422":
+          $ref: "#/components/responses/ValidationError"
+    patch:
+      tags:
+        - Builds
+      operationId: updateBuild
+      summary: Rename a build or change its parts
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Resource id.
+          schema:
+            type: string
+            format: uuid
+            example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BuildUpdate"
+            example:
+              name: Renamed build
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Build"
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  id: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                  name: My 1080p build
+                  partIds:
+                    - 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                  shareCode: null
+                  createdAt: 2026-11-12T08:30:00.000Z
+                  updatedAt: 2026-11-12T08:30:00.000Z
+                  compatible: false
+                  complete: false
+                  issues:
+                    - code: SOCKET_MISMATCH
+                      severity: error
+                      message: AMD Ryzen 5 7600 uses socket AM5, but ASUS TUF B550 uses socket AM4.
+                      partIds:
+                        - 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                        - 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+                  summary:
+                    partCount: 2
+                    totalPriceCents: 2589000
+                    estimatedWatts: 140
+                    recommendedPsuW: 200
+                    psuWattage: null
+                  parts:
+                    - id: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                      name: AMD Ryzen 5 7600
+                      brand: AMD
+                      description: 6-core Zen 4 processor.
+                      priceCents: 1399000
+                      stock: 25
+                      imageUrl: null
+                      specs:
+                        socket: AM5
+                        cores: 6
+                        tdp: 65
+                        ramType: DDR5
+                      isActive: true
+                      category:
+                        id: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+                        name: Processors
+                        slug: processors
+                      createdAt: 2026-11-12T08:30:00.000Z
+                      updatedAt: 2026-11-12T08:30:00.000Z
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: "Error 404: BUILD_NOT_FOUND"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: BUILD_NOT_FOUND
+                  message: Build not found.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "422":
+          $ref: "#/components/responses/ValidationError"
+    delete:
+      tags:
+        - Builds
+      operationId: deleteBuild
+      summary: Delete a build
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Resource id.
+          schema:
+            type: string
+            format: uuid
+            example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+      responses:
+        "204":
+          description: Done. No response body.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: "Error 404: BUILD_NOT_FOUND"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: BUILD_NOT_FOUND
+                  message: Build not found.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /builds/{id}/share:
+    post:
+      tags:
+        - Builds
+      operationId: shareBuild
+      summary: Create a share link for a build
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Resource id.
+          schema:
+            type: string
+            format: uuid
+            example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/ShareResult"
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  shareCode: Xk3p9QmZ7aB
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: "Error 404: BUILD_NOT_FOUND"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: BUILD_NOT_FOUND
+                  message: Build not found.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "422":
+          $ref: "#/components/responses/ValidationError"
+    delete:
+      tags:
+        - Builds
+      operationId: unshareBuild
+      summary: Stop sharing a build
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Resource id.
+          schema:
+            type: string
+            format: uuid
+            example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+      responses:
+        "204":
+          description: Done. No response body.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: "Error 404: BUILD_NOT_FOUND"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: BUILD_NOT_FOUND
+                  message: Build not found.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /builds/{id}/add-to-cart:
+    post:
+      tags:
+        - Builds
+      operationId: addBuildToCart
+      summary: Add every part of a build to my cart
+      description: All or nothing. Refused if the build has compatibility errors or not enough stock.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Resource id.
+          schema:
+            type: string
+            format: uuid
+            example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/BuildCartResult"
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  addedProducts: 6
+                  addedUnits: 6
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: "Error 404: BUILD_NOT_FOUND"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: BUILD_NOT_FOUND
+                  message: Build not found.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "409":
+          description: "Error 409: BUILD_INCOMPATIBLE"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: BUILD_INCOMPATIBLE
+                  message: This build has compatibility problems, so it cannot be added to the cart.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /assistant/recommend:
+    post:
+      tags:
+        - AI assistant
+      operationId: recommendBuild
+      summary: Ask the AI advisor for a build
+      description: 8 requests per minute and 40 per day per user. Names, prices and stock always come from the database.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssistantInput"
+            example:
+              prompt: A gaming PC for smooth 1080p games
+              budgetPesos: 60000
+      responses:
+        "200":
+          description: A suggestion, or an honest 'no match'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/AssistantOk"
+                  - $ref: "#/components/schemas/AssistantNoMatch"
+              example:
+                success: true
+                data:
+                  status: no_match
+                  message: I could not put together a fully compatible build for that request.
+                  problems:
+                    - The total (₱65,000) is above the budget (₱60,000).
+                  aiAssisted: true
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "429":
+          description: "Error 429: AI_RATE_LIMITED"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: AI_RATE_LIMITED
+                  message: You are asking the assistant too quickly. Wait a moment and try again.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "503":
+          description: "Error 503: AI_UNAVAILABLE"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: AI_UNAVAILABLE
+                  message: The assistant is not available right now. You can still browse the shop or use the Build PC page.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+  /admin/dashboard:
+    get:
+      tags:
+        - Admin
+      operationId: adminDashboard
+      summary: Store summary
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Dashboard"
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  paidOrders: 12
+                  grossSalesCents: 25400000
+                  pendingOrders: 2
+                  flaggedOrders: 1
+                  lowStock:
+                    - id: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                      name: Seasonic Focus GX-750
+                      stock: 3
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /admin/products:
+    get:
+      tags:
+        - Admin
+      operationId: adminListProducts
+      summary: List products including hidden ones
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: Page number.
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          required: false
+          description: Items per page.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 12
+        - name: search
+          in: query
+          required: false
+          description: Matches product name or brand.
+          schema:
+            type: string
+            maxLength: 60
+        - name: category
+          in: query
+          required: false
+          description: Category slug, for example processors.
+          schema:
+            type: string
+        - name: minPriceCents
+          in: query
+          required: false
+          description: Minimum price in centavos.
+          schema:
+            type: integer
+            minimum: 0
+        - name: maxPriceCents
+          in: query
+          required: false
+          description: Maximum price in centavos.
+          schema:
+            type: integer
+            minimum: 0
+        - name: sort
+          in: query
+          required: false
+          description: Sort order (fixed list).
+          schema:
+            type: string
+            enum:
+              - newest
+              - price_asc
+              - price_desc
+              - name_asc
+            default: newest
+        - name: status
+          in: query
+          required: false
+          description: "Admin only: which products to list."
+          schema:
+            type: string
+            enum:
+              - active
+              - inactive
+              - all
+            default: active
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Product"
+                  meta:
+                    $ref: "#/components/schemas/PageMeta"
+                required:
+                  - success
+                  - data
+                  - meta
+              example:
+                success: true
+                data:
+                  - id: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                    name: AMD Ryzen 5 7600
+                    brand: AMD
+                    description: 6-core Zen 4 processor.
+                    priceCents: 1399000
+                    stock: 25
+                    imageUrl: null
+                    specs:
+                      socket: AM5
+                      cores: 6
+                      tdp: 65
+                      ramType: DDR5
+                    isActive: true
+                    category:
+                      id: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+                      name: Processors
+                      slug: processors
+                    createdAt: 2026-11-12T08:30:00.000Z
+                    updatedAt: 2026-11-12T08:30:00.000Z
+                meta:
+                  total: 24
+                  page: 1
+                  limit: 12
+                  totalPages: 1
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+    post:
+      tags:
+        - Admin
+      operationId: adminCreateProduct
+      summary: Create a product
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductInput"
+            example:
+              categoryId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+              name: AMD Ryzen 5 7600
+              brand: AMD
+              description: 6-core processor.
+              priceCents: 1399000
+              stock: 25
+              specs:
+                socket: AM5
+      responses:
+        "201":
+          description: Product created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Product"
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  id: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                  name: AMD Ryzen 5 7600
+                  brand: AMD
+                  description: 6-core Zen 4 processor.
+                  priceCents: 1399000
+                  stock: 25
+                  imageUrl: null
+                  specs:
+                    socket: AM5
+                    cores: 6
+                    tdp: 65
+                    ramType: DDR5
+                  isActive: true
+                  category:
+                    id: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+                    name: Processors
+                    slug: processors
+                  createdAt: 2026-11-12T08:30:00.000Z
+                  updatedAt: 2026-11-12T08:30:00.000Z
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: "Error 409: PRODUCT_NAME_TAKEN"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: PRODUCT_NAME_TAKEN
+                  message: A product with this name already exists.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /admin/products/{id}:
+    get:
+      tags:
+        - Admin
+      operationId: adminGetProduct
+      summary: Get any product
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Resource id.
+          schema:
+            type: string
+            format: uuid
+            example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Product"
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  id: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                  name: AMD Ryzen 5 7600
+                  brand: AMD
+                  description: 6-core Zen 4 processor.
+                  priceCents: 1399000
+                  stock: 25
+                  imageUrl: null
+                  specs:
+                    socket: AM5
+                    cores: 6
+                    tdp: 65
+                    ramType: DDR5
+                  isActive: true
+                  category:
+                    id: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+                    name: Processors
+                    slug: processors
+                  createdAt: 2026-11-12T08:30:00.000Z
+                  updatedAt: 2026-11-12T08:30:00.000Z
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "Error 404: PRODUCT_NOT_FOUND"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: PRODUCT_NOT_FOUND
+                  message: Product not found.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "422":
+          $ref: "#/components/responses/ValidationError"
+    patch:
+      tags:
+        - Admin
+      operationId: adminUpdateProduct
+      summary: Edit a product (not its stock)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Resource id.
+          schema:
+            type: string
+            format: uuid
+            example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductUpdate"
+            example:
+              isActive: false
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Product"
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  id: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                  name: AMD Ryzen 5 7600
+                  brand: AMD
+                  description: 6-core Zen 4 processor.
+                  priceCents: 1399000
+                  stock: 25
+                  imageUrl: null
+                  specs:
+                    socket: AM5
+                    cores: 6
+                    tdp: 65
+                    ramType: DDR5
+                  isActive: false
+                  category:
+                    id: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+                    name: Processors
+                    slug: processors
+                  createdAt: 2026-11-12T08:30:00.000Z
+                  updatedAt: 2026-11-12T08:30:00.000Z
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "Error 404: PRODUCT_NOT_FOUND"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: PRODUCT_NOT_FOUND
+                  message: Product not found.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "422":
+          $ref: "#/components/responses/ValidationError"
+    delete:
+      tags:
+        - Admin
+      operationId: adminDeleteProduct
+      summary: Delete a product that was never ordered
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Resource id.
+          schema:
+            type: string
+            format: uuid
+            example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+      responses:
+        "204":
+          description: Done. No response body.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "Error 404: PRODUCT_NOT_FOUND"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: PRODUCT_NOT_FOUND
+                  message: Product not found.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "409":
+          description: "Error 409: PRODUCT_HAS_ORDERS"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: PRODUCT_HAS_ORDERS
+                  message: This product appears in past orders and cannot be deleted. Deactivate it instead.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /admin/products/{id}/stock:
+    post:
+      tags:
+        - Admin
+      operationId: adminAdjustStock
+      summary: Change stock with a recorded reason
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Resource id.
+          schema:
+            type: string
+            format: uuid
+            example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StockAdjustInput"
+            example:
+              change: 10
+              reason: Restock from supplier
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/StockAdjustResult"
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  productId: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                  previousStock: 25
+                  newStock: 35
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "Error 404: PRODUCT_NOT_FOUND"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: PRODUCT_NOT_FOUND
+                  message: Product not found.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "409":
+          description: "Error 409: STOCK_NEGATIVE"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: STOCK_NEGATIVE
+                  message: Stock cannot go below zero (current stock is 25).
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /admin/products/{id}/stock-movements:
+    get:
+      tags:
+        - Admin
+      operationId: adminStockMovements
+      summary: Stock audit trail of a product
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Resource id.
+          schema:
+            type: string
+            format: uuid
+            example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+        - name: page
+          in: query
+          required: false
+          description: Page number.
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          required: false
+          description: Items per page.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/StockMovement"
+                  meta:
+                    $ref: "#/components/schemas/PageMeta"
+                required:
+                  - success
+                  - data
+                  - meta
+              example:
+                success: true
+                data:
+                  - id: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                    previousStock: 25
+                    newStock: 35
+                    change: 10
+                    reason: Restock from supplier
+                    actor: NEXUS Admin
+                    createdAt: 2026-11-12T08:30:00.000Z
+                meta:
+                  total: 1
+                  page: 1
+                  limit: 12
+                  totalPages: 1
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "Error 404: PRODUCT_NOT_FOUND"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: PRODUCT_NOT_FOUND
+                  message: Product not found.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /admin/orders:
+    get:
+      tags:
+        - Admin
+      operationId: adminListOrders
+      summary: List all orders
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: Page number.
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          required: false
+          description: Items per page.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+        - name: status
+          in: query
+          required: false
+          description: Filter by status.
+          schema:
+            type: string
+            enum:
+              - pending_payment
+              - paid
+              - processing
+              - shipped
+              - delivered
+              - cancelled
+              - expired
+        - name: flagged
+          in: query
+          required: false
+          description: Only orders that need attention.
+          schema:
+            type: string
+            enum:
+              - "true"
+              - "false"
+        - name: from
+          in: query
+          required: false
+          description: From date (YYYY-MM-DD, Philippine time).
+          schema:
+            type: string
+            example: 2026-11-01
+        - name: to
+          in: query
+          required: false
+          description: To date (YYYY-MM-DD, Philippine time).
+          schema:
+            type: string
+            example: 2026-11-30
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AdminOrderSummary"
+                  meta:
+                    $ref: "#/components/schemas/PageMeta"
+                required:
+                  - success
+                  - data
+                  - meta
+              example:
+                success: true
+                data:
+                  - id: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                    status: paid
+                    totalCents: 1399000
+                    flagged: false
+                    customer:
+                      name: Juan Dela Cruz
+                      email: juan@nexuspc.test
+                    itemCount: 1
+                    createdAt: 2026-11-12T08:30:00.000Z
+                meta:
+                  total: 1
+                  page: 1
+                  limit: 12
+                  totalPages: 1
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /admin/orders/{id}:
+    get:
+      tags:
+        - Admin
+      operationId: adminGetOrder
+      summary: Get any order
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Resource id.
+          schema:
+            type: string
+            format: uuid
+            example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/AdminOrder"
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  id: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                  status: pending_payment
+                  subtotalCents: 1399000
+                  discountCents: 0
+                  shippingCents: 0
+                  totalCents: 1399000
+                  currency: PHP
+                  couponCode: null
+                  flagged: false
+                  shipping:
+                    name: Juan Dela Cruz
+                    phone: "09171234567"
+                    address: 123 Rizal St, Barangay Uno, Iligan City
+                  items:
+                    - productId: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                      name: AMD Ryzen 5 7600
+                      unitPriceCents: 1399000
+                      quantity: 1
+                      lineTotalCents: 1399000
+                  history:
+                    - from: null
+                      to: pending_payment
+                      note: Order placed
+                      createdAt: 2026-11-12T08:30:00.000Z
+                  expiresAt: 2026-11-12T08:45:00.000Z
+                  createdAt: 2026-11-12T08:30:00.000Z
+                  customer:
+                    name: Juan Dela Cruz
+                    email: juan@nexuspc.test
+                  flagReason: null
+                  adminActions:
+                    - cancelled
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "Error 404: ORDER_NOT_FOUND"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: ORDER_NOT_FOUND
+                  message: Order not found.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /admin/orders/{id}/status:
+    patch:
+      tags:
+        - Admin
+      operationId: adminUpdateOrderStatus
+      summary: Move an order to its next status
+      description: Allowed moves only. 'paid' and 'expired' are set by the system, never by hand.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Resource id.
+          schema:
+            type: string
+            format: uuid
+            example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderStatusInput"
+            example:
+              status: processing
+              note: Packed and ready
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/AdminOrder"
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  id: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                  status: processing
+                  subtotalCents: 1399000
+                  discountCents: 0
+                  shippingCents: 0
+                  totalCents: 1399000
+                  currency: PHP
+                  couponCode: null
+                  flagged: false
+                  shipping:
+                    name: Juan Dela Cruz
+                    phone: "09171234567"
+                    address: 123 Rizal St, Barangay Uno, Iligan City
+                  items:
+                    - productId: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                      name: AMD Ryzen 5 7600
+                      unitPriceCents: 1399000
+                      quantity: 1
+                      lineTotalCents: 1399000
+                  history:
+                    - from: null
+                      to: pending_payment
+                      note: Order placed
+                      createdAt: 2026-11-12T08:30:00.000Z
+                  expiresAt: 2026-11-12T08:45:00.000Z
+                  createdAt: 2026-11-12T08:30:00.000Z
+                  customer:
+                    name: Juan Dela Cruz
+                    email: juan@nexuspc.test
+                  flagReason: null
+                  adminActions:
+                    - cancelled
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "Error 404: ORDER_NOT_FOUND"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: ORDER_NOT_FOUND
+                  message: Order not found.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "409":
+          description: "Error 409: INVALID_TRANSITION"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: INVALID_TRANSITION
+                  message: An order cannot move from "cancelled" to "shipped".
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /admin/coupons:
+    get:
+      tags:
+        - Admin
+      operationId: adminListCoupons
+      summary: List coupons
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: Page number.
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          required: false
+          description: Items per page.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Coupon"
+                  meta:
+                    $ref: "#/components/schemas/PageMeta"
+                required:
+                  - success
+                  - data
+                  - meta
+              example:
+                success: true
+                data:
+                  - id: b8d4e6f0-1a2b-4c3d-8e4f-5a6b7c8d9e0f
+                    code: WELCOME10
+                    type: percentage
+                    value: 10
+                    minSpendCents: 500000
+                    expiresAt: 2027-12-31T00:00:00.000Z
+                    usageLimit: 500
+                    perCustomerLimit: 1
+                    usedCount: 3
+                    isActive: true
+                    createdAt: 2026-11-12T08:30:00.000Z
+                meta:
+                  total: 1
+                  page: 1
+                  limit: 12
+                  totalPages: 1
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+    post:
+      tags:
+        - Admin
+      operationId: adminCreateCoupon
+      summary: Create a coupon
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CouponInput"
+            example:
+              code: SUMMER15
+              type: percentage
+              value: 15
+              minSpendCents: 100000
+              expiresAt: 2027-12-31T00:00:00.000Z
+              usageLimit: 100
+      responses:
+        "201":
+          description: Coupon created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Coupon"
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  id: b8d4e6f0-1a2b-4c3d-8e4f-5a6b7c8d9e0f
+                  code: WELCOME10
+                  type: percentage
+                  value: 10
+                  minSpendCents: 500000
+                  expiresAt: 2027-12-31T00:00:00.000Z
+                  usageLimit: 500
+                  perCustomerLimit: 1
+                  usedCount: 3
+                  isActive: true
+                  createdAt: 2026-11-12T08:30:00.000Z
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: "Error 409: COUPON_CODE_TAKEN"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: COUPON_CODE_TAKEN
+                  message: A coupon with this code already exists.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /admin/coupons/{id}:
+    patch:
+      tags:
+        - Admin
+      operationId: adminUpdateCoupon
+      summary: Edit or turn a coupon on or off
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Resource id.
+          schema:
+            type: string
+            format: uuid
+            example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CouponUpdate"
+            example:
+              isActive: false
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Coupon"
+                required:
+                  - success
+                  - data
+              example:
+                success: true
+                data:
+                  id: b8d4e6f0-1a2b-4c3d-8e4f-5a6b7c8d9e0f
+                  code: WELCOME10
+                  type: percentage
+                  value: 10
+                  minSpendCents: 500000
+                  expiresAt: 2027-12-31T00:00:00.000Z
+                  usageLimit: 500
+                  perCustomerLimit: 1
+                  usedCount: 3
+                  isActive: false
+                  createdAt: 2026-11-12T08:30:00.000Z
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "Error 404: COUPON_NOT_FOUND"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: COUPON_NOT_FOUND
+                  message: Coupon not found.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "422":
+          $ref: "#/components/responses/ValidationError"
+    delete:
+      tags:
+        - Admin
+      operationId: adminDeleteCoupon
+      summary: Delete a coupon that was never used
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Resource id.
+          schema:
+            type: string
+            format: uuid
+            example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+      responses:
+        "204":
+          description: Done. No response body.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "Error 404: COUPON_NOT_FOUND"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: COUPON_NOT_FOUND
+                  message: Coupon not found.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "409":
+          description: "Error 409: COUPON_IN_USE"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: COUPON_IN_USE
+                  message: This coupon was used on orders and cannot be deleted. Deactivate it instead.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "422":
+          $ref: "#/components/responses/ValidationError"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token from POST /auth/login.
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: VALIDATION_ERROR
+            message:
+              type: string
+              example: Validation failed.
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  in:
+                    type: string
+                    example: body
+                  field:
+                    type: string
+                    example: email
+                  message:
+                    type: string
+                    example: Enter a valid email address.
+                required:
+                  - field
+                  - message
+          required:
+            - code
+            - message
+        requestId:
+          type: string
+          format: uuid
+          example: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+      required:
+        - success
+        - error
+        - requestId
+    PageMeta:
+      type: object
+      properties:
+        total:
+          type: integer
+          example: 24
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 12
+        totalPages:
+          type: integer
+          example: 2
+      required:
+        - total
+        - page
+        - limit
+        - totalPages
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        name:
+          type: string
+          example: Processors
+        slug:
+          type: string
+          example: processors
+        description:
+          type: string
+          example: Desktop CPUs.
+      required:
+        - id
+        - name
+        - slug
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+        name:
+          type: string
+          example: Juan Dela Cruz
+        email:
+          type: string
+          example: juan@nexuspc.test
+        role:
+          type: string
+          enum:
+            - customer
+            - admin
+          example: customer
+        createdAt:
+          type: string
+          format: date-time
+          example: 2026-11-12T08:30:00.000Z
+      required:
+        - id
+        - name
+        - email
+        - role
+        - createdAt
+    AuthResult:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+          description: "JWT for the Authorization: Bearer header."
+      required:
+        - user
+        - token
+    RegisterInput:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Juan Dela Cruz
+          minLength: 2
+          maxLength: 80
+        email:
+          type: string
+          example: juan@nexuspc.test
+          format: email
+        password:
+          type: string
+          example: Secret1234
+          minLength: 8
+          maxLength: 72
+          description: At least one letter and one number.
+      required:
+        - name
+        - email
+        - password
+    LoginInput:
+      type: object
+      properties:
+        email:
+          type: string
+          example: juan@nexuspc.test
+          format: email
+        password:
+          type: string
+          example: Customer1234
+      required:
+        - email
+        - password
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+        name:
+          type: string
+          example: AMD Ryzen 5 7600
+        brand:
+          type: string
+          example: AMD
+          nullable: true
+        description:
+          type: string
+          example: 6-core Zen 4 processor.
+        priceCents:
+          type: integer
+          example: 1399000
+          description: Whole centavos. 1399000 = PHP 13,990.00.
+        stock:
+          type: integer
+          example: 25
+        imageUrl:
+          type: string
+          example: https://example.com/cpu.jpg
+          nullable: true
+        specs:
+          type: object
+          additionalProperties: true
+          example:
+            socket: AM5
+            tdp: 65
+        isActive:
+          type: boolean
+          example: true
+        category:
+          $ref: "#/components/schemas/Category"
+        createdAt:
+          type: string
+          format: date-time
+          example: 2026-11-12T08:30:00.000Z
+        updatedAt:
+          type: string
+          format: date-time
+          example: 2026-11-12T08:30:00.000Z
+      required:
+        - id
+        - name
+        - brand
+        - description
+        - priceCents
+        - stock
+        - imageUrl
+        - specs
+        - isActive
+        - category
+        - createdAt
+        - updatedAt
+    ProductInput:
+      type: object
+      properties:
+        categoryId:
+          type: string
+          format: uuid
+          example: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        name:
+          type: string
+          example: AMD Ryzen 5 7600
+          minLength: 2
+          maxLength: 120
+        brand:
+          type: string
+          example: AMD
+        description:
+          type: string
+          example: 6-core processor.
+        priceCents:
+          type: integer
+          example: 1399000
+          minimum: 0
+        stock:
+          type: integer
+          example: 25
+          minimum: 0
+          description: Starting stock (audited as 'Initial stock'). Cannot be set by PATCH.
+        imageUrl:
+          type: string
+          example: https://example.com/cpu.jpg
+        specs:
+          type: object
+          additionalProperties: true
+          example:
+            socket: AM5
+        isActive:
+          type: boolean
+          example: true
+      required:
+        - categoryId
+        - name
+        - priceCents
+        - stock
+    ProductUpdate:
+      type: object
+      description: Send at least one field. Stock cannot be changed here.
+      properties:
+        categoryId:
+          type: string
+          format: uuid
+          example: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        name:
+          type: string
+          example: New name
+        brand:
+          type: string
+          example: AMD
+        description:
+          type: string
+          example: Text
+        priceCents:
+          type: integer
+          example: 1299000
+        imageUrl:
+          type: string
+          example: https://example.com/x.jpg
+        specs:
+          type: object
+          additionalProperties: true
+        isActive:
+          type: boolean
+          example: false
+    StockAdjustInput:
+      type: object
+      properties:
+        change:
+          type: integer
+          example: 10
+          description: Positive adds stock, negative removes it. Not zero.
+        reason:
+          type: string
+          example: Restock from supplier
+          minLength: 3
+          maxLength: 200
+      required:
+        - change
+        - reason
+    StockAdjustResult:
+      type: object
+      properties:
+        productId:
+          type: string
+          format: uuid
+          example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+        previousStock:
+          type: integer
+          example: 25
+        newStock:
+          type: integer
+          example: 35
+      required:
+        - productId
+        - previousStock
+        - newStock
+    StockMovement:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+        previousStock:
+          type: integer
+          example: 25
+        newStock:
+          type: integer
+          example: 35
+        change:
+          type: integer
+          example: 10
+        reason:
+          type: string
+          example: Restock from supplier
+        actor:
+          type: string
+          example: NEXUS Admin
+        createdAt:
+          type: string
+          format: date-time
+          example: 2026-11-12T08:30:00.000Z
+      required:
+        - id
+        - previousStock
+        - newStock
+        - change
+        - reason
+        - actor
+        - createdAt
+    CartItem:
+      type: object
+      properties:
+        productId:
+          type: string
+          format: uuid
+          example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+        name:
+          type: string
+          example: AMD Ryzen 5 7600
+        brand:
+          type: string
+          example: AMD
+          nullable: true
+        imageUrl:
+          type: string
+          example: https://example.com/cpu.jpg
+          nullable: true
+        categorySlug:
+          type: string
+          example: processors
+          nullable: true
+        unitPriceCents:
+          type: integer
+          example: 1399000
+        quantity:
+          type: integer
+          example: 1
+        lineTotalCents:
+          type: integer
+          example: 1399000
+        stock:
+          type: integer
+          example: 25
+        issue:
+          type: string
+          nullable: true
+          description: UNAVAILABLE, OUT_OF_STOCK, INSUFFICIENT_STOCK, or null when the item is fine.
+          example: null
+      required:
+        - productId
+        - name
+        - brand
+        - imageUrl
+        - categorySlug
+        - unitPriceCents
+        - quantity
+        - lineTotalCents
+        - stock
+        - issue
+    Cart:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CartItem"
+        itemCount:
+          type: integer
+          example: 1
+        subtotalCents:
+          type: integer
+          example: 1399000
+        hasIssues:
+          type: boolean
+          example: false
+      required:
+        - items
+        - itemCount
+        - subtotalCents
+        - hasIssues
+    CartAddInput:
+      type: object
+      properties:
+        productId:
+          type: string
+          format: uuid
+          example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+        quantity:
+          type: integer
+          example: 1
+          minimum: 1
+          maximum: 99
+          default: 1
+      required:
+        - productId
+    CartQuantityInput:
+      type: object
+      properties:
+        quantity:
+          type: integer
+          example: 2
+          minimum: 1
+          maximum: 99
+      required:
+        - quantity
+    QuoteInput:
+      type: object
+      properties:
+        couponCode:
+          type: string
+          example: WELCOME10
+          maxLength: 40
+      required: []
+    QuoteResult:
+      type: object
+      properties:
+        subtotalCents:
+          type: integer
+          example: 1399000
+        discountCents:
+          type: integer
+          example: 139900
+        shippingCents:
+          type: integer
+          example: 0
+          description: PHP 150 (15000), free from a PHP 5,000 subtotal.
+        totalCents:
+          type: integer
+          example: 1259100
+        coupon:
+          type: object
+          properties:
+            couponId:
+              type: string
+              format: uuid
+              example: b8d4e6f0-1a2b-4c3d-8e4f-5a6b7c8d9e0f
+            code:
+              type: string
+              example: WELCOME10
+            discountCents:
+              type: integer
+              example: 139900
+          required:
+            - couponId
+            - code
+            - discountCents
+          nullable: true
+      required:
+        - subtotalCents
+        - discountCents
+        - shippingCents
+        - totalCents
+        - coupon
+    ShippingInput:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Juan Dela Cruz
+          minLength: 2
+          maxLength: 80
+        phone:
+          type: string
+          example: "09171234567"
+          description: "Philippine mobile number: 09XXXXXXXXX or +639XXXXXXXXX."
+        address:
+          type: string
+          example: 123 Rizal St, Barangay Uno, Iligan City
+          minLength: 10
+          maxLength: 300
+      required:
+        - name
+        - phone
+        - address
+    OrderInput:
+      type: object
+      properties:
+        shipping:
+          $ref: "#/components/schemas/ShippingInput"
+        couponCode:
+          type: string
+          example: WELCOME10
+      required:
+        - shipping
+    OrderItem:
+      type: object
+      properties:
+        productId:
+          type: string
+          format: uuid
+          example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+        name:
+          type: string
+          example: AMD Ryzen 5 7600
+        unitPriceCents:
+          type: integer
+          example: 1399000
+        quantity:
+          type: integer
+          example: 1
+        lineTotalCents:
+          type: integer
+          example: 1399000
+      required:
+        - productId
+        - name
+        - unitPriceCents
+        - quantity
+        - lineTotalCents
+    OrderHistory:
+      type: object
+      properties:
+        from:
+          type: string
+          example: pending_payment
+          nullable: true
+        to:
+          type: string
+          example: paid
+        note:
+          type: string
+          example: Payment confirmed by maya
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+          example: 2026-11-12T08:30:00.000Z
+      required:
+        - from
+        - to
+        - note
+        - createdAt
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+        status:
+          type: string
+          enum:
+            - pending_payment
+            - paid
+            - processing
+            - shipped
+            - delivered
+            - cancelled
+            - expired
+          example: pending_payment
+        subtotalCents:
+          type: integer
+          example: 1399000
+        discountCents:
+          type: integer
+          example: 0
+        shippingCents:
+          type: integer
+          example: 0
+        totalCents:
+          type: integer
+          example: 1399000
+        currency:
+          type: string
+          example: PHP
+        couponCode:
+          type: string
+          example: WELCOME10
+          nullable: true
+        flagged:
+          type: boolean
+          example: false
+        shipping:
+          type: object
+          properties:
+            name:
+              type: string
+              example: Juan Dela Cruz
+            phone:
+              type: string
+              example: "09171234567"
+            address:
+              type: string
+              example: 123 Rizal St, Iligan City
+          required:
+            - name
+            - phone
+            - address
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderItem"
+        history:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderHistory"
+        expiresAt:
+          type: string
+          format: date-time
+          example: 2026-11-12T08:45:00.000Z
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+          example: 2026-11-12T08:30:00.000Z
+      required:
+        - id
+        - status
+        - subtotalCents
+        - discountCents
+        - shippingCents
+        - totalCents
+        - currency
+        - couponCode
+        - flagged
+        - shipping
+        - items
+        - history
+        - expiresAt
+        - createdAt
+    OrderSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+        status:
+          type: string
+          enum:
+            - pending_payment
+            - paid
+            - processing
+            - shipped
+            - delivered
+            - cancelled
+            - expired
+          example: paid
+        totalCents:
+          type: integer
+          example: 1399000
+        itemCount:
+          type: integer
+          example: 1
+        createdAt:
+          type: string
+          format: date-time
+          example: 2026-11-12T08:30:00.000Z
+      required:
+        - id
+        - status
+        - totalCents
+        - itemCount
+        - createdAt
+    PaymentLink:
+      type: object
+      properties:
+        checkoutUrl:
+          type: string
+          example: https://payments-web-sandbox.paymaya.com/v2/checkout?id=...
+      required:
+        - checkoutUrl
+    WebhookResult:
+      type: object
+      properties:
+        received:
+          type: boolean
+          example: true
+        outcome:
+          type: string
+          enum:
+            - paid
+            - already_paid
+            - amount_mismatch
+            - late_payment
+            - no_payment_session
+            - unknown_order
+            - duplicate
+            - ignored
+          example: paid
+      required:
+        - received
+        - outcome
+    Issue:
+      type: object
+      properties:
+        code:
+          type: string
+          example: SOCKET_MISMATCH
+        severity:
+          type: string
+          enum:
+            - error
+            - warning
+          example: error
+        message:
+          type: string
+          example: AMD Ryzen 5 7600 uses socket AM5, but ASUS TUF B550 uses socket AM4.
+        partIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+            example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+      required:
+        - code
+        - severity
+        - message
+        - partIds
+    ReportSummary:
+      type: object
+      properties:
+        partCount:
+          type: integer
+          example: 2
+        totalPriceCents:
+          type: integer
+          example: 2589000
+        estimatedWatts:
+          type: integer
+          example: 140
+          nullable: true
+        recommendedPsuW:
+          type: integer
+          example: 200
+          nullable: true
+        psuWattage:
+          type: integer
+          example: 650
+          nullable: true
+      required:
+        - partCount
+        - totalPriceCents
+        - estimatedWatts
+        - recommendedPsuW
+        - psuWattage
+    CompatibilityReport:
+      type: object
+      properties:
+        compatible:
+          type: boolean
+          example: false
+        complete:
+          type: boolean
+          example: false
+        issues:
+          type: array
+          items:
+            $ref: "#/components/schemas/Issue"
+        summary:
+          $ref: "#/components/schemas/ReportSummary"
+        parts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+      required:
+        - compatible
+        - complete
+        - issues
+        - summary
+        - parts
+    PartIdsInput:
+      type: object
+      properties:
+        partIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+            example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+      required:
+        - partIds
+    BuildInput:
+      type: object
+      properties:
+        name:
+          type: string
+          example: My 1080p build
+          minLength: 2
+          maxLength: 60
+        partIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+            example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+          minItems: 1
+          maxItems: 12
+      required:
+        - name
+        - partIds
+    BuildUpdate:
+      type: object
+      description: Send at least one field.
+      properties:
+        name:
+          type: string
+          example: Renamed build
+        partIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+            example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+          minItems: 1
+          maxItems: 12
+    Build:
+      allOf:
+        - type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+            name:
+              type: string
+              example: My 1080p build
+            partIds:
+              type: array
+              items:
+                type: string
+                format: uuid
+                example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+            shareCode:
+              type: string
+              example: Xk3p9QmZ7aB
+              nullable: true
+            createdAt:
+              type: string
+              format: date-time
+              example: 2026-11-12T08:30:00.000Z
+            updatedAt:
+              type: string
+              format: date-time
+              example: 2026-11-12T08:30:00.000Z
+          required:
+            - id
+            - name
+            - partIds
+            - shareCode
+            - createdAt
+            - updatedAt
+        - $ref: "#/components/schemas/CompatibilityReport"
+    SharedBuild:
+      allOf:
+        - type: object
+          properties:
+            name:
+              type: string
+              example: My 1080p build
+            createdAt:
+              type: string
+              format: date-time
+              example: 2026-11-12T08:30:00.000Z
+          required:
+            - name
+            - createdAt
+        - $ref: "#/components/schemas/CompatibilityReport"
+    ShareResult:
+      type: object
+      properties:
+        shareCode:
+          type: string
+          example: Xk3p9QmZ7aB
+      required:
+        - shareCode
+    BuildCartResult:
+      type: object
+      properties:
+        addedProducts:
+          type: integer
+          example: 6
+        addedUnits:
+          type: integer
+          example: 6
+      required:
+        - addedProducts
+        - addedUnits
+    AssistantInput:
+      type: object
+      properties:
+        prompt:
+          type: string
+          example: A gaming PC for smooth 1080p games
+          minLength: 5
+          maxLength: 500
+        budgetPesos:
+          type: integer
+          example: 60000
+          minimum: 15000
+          maximum: 1000000
+      required:
+        - prompt
+    AssistantOk:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+          enum:
+            - ok
+        summary:
+          type: string
+          example: A balanced 1080p gaming build.
+        parts:
+          type: array
+          items:
+            allOf:
+              - $ref: "#/components/schemas/Product"
+              - type: object
+                properties:
+                  reason:
+                    type: string
+                    example: Good value for 1080p.
+                required:
+                  - reason
+        report:
+          $ref: "#/components/schemas/CompatibilityReport"
+        budgetPesos:
+          type: integer
+          example: 60000
+          nullable: true
+        discardedCount:
+          type: integer
+          example: 0
+        aiAssisted:
+          type: boolean
+          example: true
+        model:
+          type: string
+          example: gemini-3.5-flash-lite
+      required:
+        - status
+        - summary
+        - parts
+        - report
+        - budgetPesos
+        - discardedCount
+        - aiAssisted
+        - model
+    AssistantNoMatch:
+      type: object
+      properties:
+        status:
+          type: string
+          example: no_match
+          enum:
+            - no_match
+        message:
+          type: string
+          example: I could not put together a fully compatible build for that request.
+        problems:
+          type: array
+          items:
+            type: string
+            example: The total (₱65,000) is above the budget (₱60,000).
+        aiAssisted:
+          type: boolean
+          example: true
+      required:
+        - status
+        - message
+        - problems
+        - aiAssisted
+    Dashboard:
+      type: object
+      properties:
+        paidOrders:
+          type: integer
+          example: 12
+        grossSalesCents:
+          type: integer
+          example: 25400000
+        pendingOrders:
+          type: integer
+          example: 2
+        flaggedOrders:
+          type: integer
+          example: 1
+        lowStock:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+              name:
+                type: string
+                example: Seasonic Focus GX-750
+              stock:
+                type: integer
+                example: 3
+            required:
+              - id
+              - name
+              - stock
+      required:
+        - paidOrders
+        - grossSalesCents
+        - pendingOrders
+        - flaggedOrders
+        - lowStock
+    AdminOrderSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 3f1c2d4e-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+        status:
+          type: string
+          enum:
+            - pending_payment
+            - paid
+            - processing
+            - shipped
+            - delivered
+            - cancelled
+            - expired
+        totalCents:
+          type: integer
+          example: 1399000
+        flagged:
+          type: boolean
+          example: false
+        customer:
+          type: object
+          properties:
+            name:
+              type: string
+              example: Juan Dela Cruz
+            email:
+              type: string
+              example: juan@nexuspc.test
+          required:
+            - name
+            - email
+        itemCount:
+          type: integer
+          example: 1
+        createdAt:
+          type: string
+          format: date-time
+          example: 2026-11-12T08:30:00.000Z
+      required:
+        - id
+        - status
+        - totalCents
+        - flagged
+        - customer
+        - itemCount
+        - createdAt
+    AdminOrder:
+      allOf:
+        - $ref: "#/components/schemas/Order"
+        - type: object
+          properties:
+            customer:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Juan Dela Cruz
+                email:
+                  type: string
+                  example: juan@nexuspc.test
+              required:
+                - name
+                - email
+            flagReason:
+              type: string
+              example: Payment received after the order was cancelled. Refund required.
+              nullable: true
+            adminActions:
+              type: array
+              items:
+                type: string
+                example: processing
+          required:
+            - customer
+            - flagReason
+            - adminActions
+    OrderStatusInput:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - pending_payment
+            - paid
+            - processing
+            - shipped
+            - delivered
+            - cancelled
+            - expired
+          example: processing
+        note:
+          type: string
+          example: Packed and ready
+          maxLength: 200
+      required:
+        - status
+    Coupon:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: b8d4e6f0-1a2b-4c3d-8e4f-5a6b7c8d9e0f
+        code:
+          type: string
+          example: WELCOME10
+        type:
+          type: string
+          enum:
+            - percentage
+            - fixed
+          example: percentage
+        value:
+          type: integer
+          example: 10
+          description: Percent (1-100) or centavos for a fixed coupon.
+        minSpendCents:
+          type: integer
+          example: 500000
+        expiresAt:
+          type: string
+          format: date-time
+          example: 2027-12-31T00:00:00.000Z
+          nullable: true
+        usageLimit:
+          type: integer
+          example: 500
+          nullable: true
+        perCustomerLimit:
+          type: integer
+          example: 1
+        usedCount:
+          type: integer
+          example: 3
+        isActive:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+          example: 2026-11-12T08:30:00.000Z
+      required:
+        - id
+        - code
+        - type
+        - value
+        - minSpendCents
+        - expiresAt
+        - usageLimit
+        - perCustomerLimit
+        - usedCount
+        - isActive
+        - createdAt
+    CouponInput:
+      type: object
+      properties:
+        code:
+          type: string
+          example: SUMMER15
+          description: 3-30 letters, numbers, - or _. Stored in capitals.
+        type:
+          type: string
+          enum:
+            - percentage
+            - fixed
+          example: percentage
+        value:
+          type: integer
+          example: 15
+        minSpendCents:
+          type: integer
+          example: 0
+          default: 0
+        expiresAt:
+          type: string
+          format: date-time
+          example: 2027-12-31T00:00:00.000Z
+          nullable: true
+        usageLimit:
+          type: integer
+          example: 100
+          nullable: true
+        perCustomerLimit:
+          type: integer
+          example: 1
+          default: 1
+        isActive:
+          type: boolean
+          example: true
+          default: true
+      required:
+        - code
+        - type
+        - value
+    CouponUpdate:
+      type: object
+      description: Send at least one field.
+      properties:
+        code:
+          type: string
+          example: SUMMER20
+        type:
+          type: string
+          enum:
+            - percentage
+            - fixed
+        value:
+          type: integer
+          example: 20
+        minSpendCents:
+          type: integer
+          example: 0
+        expiresAt:
+          type: string
+          format: date-time
+          example: 2026-11-12T08:30:00.000Z
+          nullable: true
+        usageLimit:
+          type: integer
+          example: 100
+          nullable: true
+        perCustomerLimit:
+          type: integer
+          example: 1
+        isActive:
+          type: boolean
+          example: false
+    Health:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+        database:
+          type: string
+          example: connected
+      required:
+        - status
+        - database
+  responses:
+    Unauthorized:
+      description: "Error 401: UNAUTHENTICATED"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            error:
+              code: UNAUTHENTICATED
+              message: Missing or malformed Authorization header.
+            requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+    Forbidden:
+      description: "Error 403: FORBIDDEN"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            error:
+              code: FORBIDDEN
+              message: You do not have permission to do that.
+            requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+    ValidationError:
+      description: "Error 422: VALIDATION_ERROR"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            success: false
+            error:
+              code: VALIDATION_ERROR
+              message: Validation failed.
+              details:
+                - in: body
+                  field: email
+                  message: Enter a valid email address.
+            requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
