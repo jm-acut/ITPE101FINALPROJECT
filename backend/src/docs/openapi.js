@@ -284,6 +284,16 @@ add("post", "/webhooks/maya", {
 });
 
 // Builds
+
+add("post", "/webhooks/paymongo", {
+    tag: "Payments", id: "paymongoWebhook", summary: "Receive PayMongo payment events (used when PAYMENT_PROVIDER=paymongo)",
+    description: "The Paymongo-Signature header (HMAC-SHA256 over '<timestamp>.<raw body>') is verified before anything changes. The response is NOT wrapped in the usual envelope.",
+    headers: [{ name: "Paymongo-Signature", in: "header", required: true, description: "t=<timestamp>,te=<test signature>,li=<live signature>", schema: { type: "string", example: "t=1700000000,te=9f8e7d...,li=" } }],
+    body: [{ type: "object", description: "PayMongo event.", additionalProperties: true }, { data: { id: "evt_123", type: "event", attributes: { type: "checkout_session.payment.paid" } } }],
+    ok: [200, json("Event processed, duplicate, or ignored", ref("WebhookResult"), { received: true, outcome: "paid" })],
+    errors: [[400, "INVALID_JSON", "Webhook body is not valid JSON."], [401, "INVALID_SIGNATURE", "Webhook signature does not match."], [503, "PAYMENT_NOT_CONFIGURED", "Online payment is not configured on this server."]]
+});
+
 add("post", "/builds/check", { tag: "Builds", id: "checkBuild", summary: "Check whether parts work together", description: "Public. Rules: socket, memory type, power supply, part limits.", body: [ref("PartIdsInput"), { partIds: [UUID, UUID2] }], ok: [200, success(ref("CompatibilityReport"), report)] });
 add("get", "/builds/shared/{code}", { tag: "Builds", id: "getSharedBuild", summary: "Open a shared build (read-only)", description: "Hides the owner. Prices and stock are live.", ok: [200, success(ref("SharedBuild"), { name: "My 1080p build", createdAt: NOW, ...report })], errors: [[404, "SHARE_NOT_FOUND", "This shared build does not exist or is no longer shared."]] });
 add("get", "/builds", { tag: "Builds", id: "listBuilds", summary: "List my saved builds", auth: "user", ok: [200, success(arr(ref("Build")), [build])] });

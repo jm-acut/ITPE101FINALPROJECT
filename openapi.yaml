@@ -1431,6 +1431,84 @@ paths:
                   code: PAYMENT_NOT_CONFIGURED
                   message: Online payment is not configured on this server.
                 requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+  /webhooks/paymongo:
+    post:
+      tags:
+        - Payments
+      operationId: paymongoWebhook
+      summary: Receive PayMongo payment events (used when PAYMENT_PROVIDER=paymongo)
+      description: The Paymongo-Signature header (HMAC-SHA256 over '<timestamp>.<raw body>') is verified before anything changes. The response is NOT wrapped in the usual envelope.
+      security: []
+      parameters:
+        - name: Paymongo-Signature
+          in: header
+          required: true
+          description: t=<timestamp>,te=<test signature>,li=<live signature>
+          schema:
+            type: string
+            example: t=1700000000,te=9f8e7d...,li=
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: PayMongo event.
+              additionalProperties: true
+            example:
+              data:
+                id: evt_123
+                type: event
+                attributes:
+                  type: checkout_session.payment.paid
+      responses:
+        "200":
+          description: Event processed, duplicate, or ignored
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookResult"
+              example:
+                received: true
+                outcome: paid
+        "400":
+          description: "Error 400: INVALID_JSON"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: INVALID_JSON
+                  message: Webhook body is not valid JSON.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "401":
+          description: "Error 401: INVALID_SIGNATURE"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: INVALID_SIGNATURE
+                  message: Webhook signature does not match.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "503":
+          description: "Error 503: PAYMENT_NOT_CONFIGURED"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  code: PAYMENT_NOT_CONFIGURED
+                  message: Online payment is not configured on this server.
+                requestId: 7a2b9c1d-4e3f-4a5b-9c6d-1e2f3a4b5c6d
   /builds/check:
     post:
       tags:

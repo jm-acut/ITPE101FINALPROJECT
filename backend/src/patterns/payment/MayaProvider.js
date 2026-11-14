@@ -66,10 +66,11 @@ export default class MayaProvider extends PaymentProvider {
     }
 
     // Reconciliation: look the payment up by our order id (Maya calls it the request reference number).
-    async findPayment(order) {
-        const { ok, status, json } = await this.#call("GET", `/payments/v1/payment-rrns/${encodeURIComponent(order.id)}`, {
-            key: this.#secretKey
-        });
+    
+    async findPayment({ orderId }) {
+    const { ok, status, json } = await this.#call("GET", `/payments/v1/payment-rrns/${encodeURIComponent(orderId)}`, {
+        key: this.#secretKey
+    });
 
         if (status === 404) return { paid: false, paymentId: null, amountCents: null, currency: null, status: null, raw: null };
         if (!ok) {

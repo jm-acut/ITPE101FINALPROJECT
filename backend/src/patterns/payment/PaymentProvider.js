@@ -1,5 +1,8 @@
 // Abstract payment provider. Every gateway implements this same contract,
 // so the services never import a specific gateway.
+//
+// Money rule for the contract: every amount that leaves a provider is an integer number of CENTAVOS.
+// A provider that talks in pesos (Maya) converts inside itself.
 export default class PaymentProvider {
     constructor() {
         if (new.target === PaymentProvider) {
@@ -17,12 +20,13 @@ export default class PaymentProvider {
     }
 
     // Asks the gateway whether an order was paid (reconciliation).
+    // Maya looks the payment up by orderId; PayMongo by the checkout session reference. Each uses what it needs.
     // -> { paid, paymentId, amountCents, currency, status, raw }
-    async findPayment(/* { id } */) {
+    async findPayment(/* { orderId, reference } */) {
         throw new Error("Not implemented: findPayment");
     }
 
-    // -> true if the gateway cancelled the session, false if it refused
+    // -> true if the gateway closed the session, false if it refused (for example it is already paid)
     async cancelCheckout(/* reference */) {
         throw new Error("Not implemented: cancelCheckout");
     }

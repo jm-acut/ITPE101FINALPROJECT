@@ -83,7 +83,7 @@ export const paymentRepository = {
         const cutoff = new Date(Date.now() - 30_000).toISOString();
         const { data, error } = await supabase
             .from("payments")
-            .select("id, order_id, order:orders!inner(status)")
+            .select("id, order_id, gateway_reference, order:orders!inner(status)")
             .eq("status", "pending")
             .eq("order.status", "pending_payment")
             .lt("created_at", cutoff)

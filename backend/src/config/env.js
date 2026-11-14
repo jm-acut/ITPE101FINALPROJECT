@@ -17,7 +17,11 @@ const schema = z.object({
     // Maya Checkout (sandbox by default)
     MAYA_PUBLIC_KEY: z.string().optional(),
     MAYA_SECRET_KEY: z.string().optional(),
-    MAYA_BASE_URL: z.url().default("https://pg-sandbox.paymaya.com")
+    MAYA_BASE_URL: z.url().default("https://pg-sandbox.paymaya.com"),
+    // Which gateway is used. "maya" is the default.
+    PAYMENT_PROVIDER: z.enum(["maya", "paymongo"]).default("maya"),
+    PAYMONGO_SECRET_KEY: z.string().optional(),
+    PAYMONGO_WEBHOOK_SECRET: z.string().optional()
 });
 
 const parsed = schema.safeParse(process.env);
