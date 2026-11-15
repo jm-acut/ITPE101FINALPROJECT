@@ -9,10 +9,19 @@
 
 ## Test database
 Integration tests use the database named in `backend/.env.test` (not committed). Every test creates its own data (names starting with `itest-`) and removes it afterwards, so the suite can run repeatedly. Tests never run `reset` and never touch seed data.
-Setup used for this project: (write which one you used: the same Supabase project as development, or a separate project).
+Setup used for this project: the same Supabase project as development, with backend/.env.test copied from backend/.env.
 If a run is killed halfway, leftovers are removed with the SQL in the README.
 
+
 ## What is covered
+
+| Requirement | Test file | Test (summary) |
+|---|---|---|
+| Provider contract and factory (T-17) | `paymentProviders.test.js` | abstract base cannot be created; factory builds Maya and PayMongo; both used through the base type; unknown or unconfigured provider is a controlled 503 |
+| Provider webhooks | `paymentProviders.test.js` | Maya and PayMongo signatures accepted, altered or stale rejected, other events ignored |
+| Payment service rules (composition) | `paymentService.test.js` | session reuse, duplicate events, unknown orders, recovery and cleanup paths, using fake collaborators |
+| API contract (T-10, T-24) | `openapi.test.js`, `contract.int.test.js` | every operation documented with examples; the frontend calls only documented endpoints; every documented route exists and answers with a documented status |
+
 | Requirement | Test file | Test (summary) |
 |---|---|---|
 | Authentication | `auth-roles.int.test.js` | register, sign in, read profile; duplicate email 409; generic wrong-password answer; injection payload 422 |
