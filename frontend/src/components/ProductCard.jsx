@@ -1,42 +1,26 @@
-import { useState } from "react";
+
 import { Link } from "react-router-dom";
 
 import {
-    categoryIcon,
     formatPrice,
     specChips,
-    stockStatus,
-    getProductImage
+    stockStatus
 } from "../utils.js";
 
-export default function ProductCard({ product }) {
-    const Icon = categoryIcon(product.category?.slug);
-    const status = stockStatus(product.stock);
-    const imageUrl = getProductImage(product);
+import ProductImage from "./ProductImage.jsx";
 
-    const [imageFailed, setImageFailed] = useState(false);
+export default function ProductCard({ product }) {
+    const status = stockStatus(product.stock);
 
     return (
         <Link
             to={`/products/${product.id}`}
             className="product-card"
         >
-            <div className="product-media">
-                {imageUrl && !imageFailed ? (
-                    <img
-                        src={imageUrl}
-                        alt={product.name}
-                        loading="lazy"
-                        onError={() => setImageFailed(true)}
-                    />
-                ) : (
-                    <Icon
-                        size={44}
-                        strokeWidth={1.5}
-                        aria-hidden="true"
-                    />
-                )}
-            </div>
+            <ProductImage
+                product={product}
+                className="product-media"
+            />
 
             <div className="product-body">
                 <p className="product-meta">

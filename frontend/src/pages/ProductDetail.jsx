@@ -6,12 +6,12 @@ import { catalogApi, isAbort } from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useCart } from "../context/CartContext.jsx";
 import {
-    categoryIcon,
     formatPrice,
     SPEC_LABELS,
-    stockStatus,
-    getProductImage
+    stockStatus
 } from "../utils.js";
+
+import ProductImage from "../components/ProductImage.jsx";
 
 export default function ProductDetail() {
     const { id } = useParams();
@@ -21,7 +21,6 @@ export default function ProductDetail() {
     const location = useLocation();
 
     const [product, setProduct] = useState(null);
-    const [imageFailed, setImageFailed] = useState(false);
     const [error, setError] = useState(null);
     const [quantity, setQuantity] = useState(1);
     const [adding, setAdding] = useState(false);
@@ -31,7 +30,6 @@ export default function ProductDetail() {
         const controller = new AbortController();
 
         setProduct(null);
-        setImageFailed(false);
         setError(null);
         setQuantity(1);
         setFeedback(null);
@@ -113,12 +111,10 @@ export default function ProductDetail() {
         );
     }
 
-    const Icon = categoryIcon(product.category?.slug);
     const status = stockStatus(product.stock);
     const maxQty = Math.min(product.stock, 99);
     const soldOut = product.stock <= 0;
     const specs = Object.entries(product.specs ?? {});
-    const productImage = getProductImage(product);
 
     return (
         <div className="container page">
@@ -130,21 +126,10 @@ export default function ProductDetail() {
             <div className="detail">
 
                 {/* Product Image */}
-                <div className="detail-media">
-                    {productImage && !imageFailed ? (
-                        <img
-                            src={productImage}
-                            alt={product.name}
-                            onError={() => setImageFailed(true)}
-                        />
-                    ) : (
-                        <Icon
-                            size={88}
-                            strokeWidth={1.25}
-                            aria-hidden="true"
-                        />
-                    )}
-                </div>
+                <ProductImage
+                    product={product}
+                    className="detail-media"
+                />
 
                 {/* Product Information */}
                 <div className="detail-info">
