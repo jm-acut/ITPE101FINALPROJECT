@@ -109,7 +109,7 @@ export default function Products() {
     return (
         <div className="container page">
             <header className="page-head">
-                <h1>Components</h1>
+                <h1>PC Parts & Accessories</h1>
                 <p>{meta ? `${meta.total} ${meta.total === 1 ? "product" : "products"}` : "Loading products"}</p>
             </header>
 

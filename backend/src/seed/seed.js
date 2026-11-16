@@ -1,3 +1,4 @@
+
 // Run with: npm run seed. Safe to run many times (everything is upserted on a unique key).
 // The demo passwords are TEST-ONLY.
 import bcrypt from "bcryptjs";
@@ -15,7 +16,22 @@ const categories = [
     { name: "Motherboards", slug: "motherboards", description: "The board that connects every part of your build." },
     { name: "Memory", slug: "memory", description: "DDR4 and DDR5 RAM kits." },
     { name: "Storage", slug: "storage", description: "NVMe and SATA SSDs, plus hard drives." },
-    { name: "Power Supplies", slug: "power-supplies", description: "Certified PSUs with the wattage your build needs." }
+    { name: "Power Supplies", slug: "power-supplies", description: "Certified PSUs with the wattage your build needs." },
+    {
+        name: "Peripherals",
+        slug: "peripherals",
+        description: "Gaming and office mice, keyboards, and headsets."
+    },
+    {
+        name: "Displays",
+        slug: "displays",
+        description: "Full HD, QHD, and 4K computer monitors."
+    },
+    {
+        name: "Accessories",
+        slug: "accessories",
+        description: "Mouse pads, desktop speakers, and computer cables."
+    }
 ];
 
 // price is in PESOS here and converted to centavos below. Prices are sample data.
@@ -77,7 +93,9 @@ async function run() {
         .from("categories")
         .upsert(categories, { onConflict: "slug" })
         .select("id, slug");
+
     check(catError, "categories");
+
     const categoryId = Object.fromEntries(cats.map((c) => [c.slug, c.id]));
 
     const productRows = products.map(({ c, price, ...p }) => ({
@@ -86,16 +104,30 @@ async function run() {
         price_cents: price * 100,
         is_active: true
     }));
-    const { error: prodError } = await supabase.from("products").upsert(productRows, { onConflict: "name" });
+
+    const { error: prodError } = await supabase
+        .from("products")
+        .upsert(productRows, { onConflict: "name" });
+
     check(prodError, "products");
 
     const userRows = await Promise.all(
-        users.map(async ({ password, ...u }) => ({ ...u, password_hash: await bcrypt.hash(password, 12) }))
+        users.map(async ({ password, ...u }) => ({
+            ...u,
+            password_hash: await bcrypt.hash(password, 12)
+        }))
     );
-    const { error: userError } = await supabase.from("users").upsert(userRows, { onConflict: "email" });
+
+    const { error: userError } = await supabase
+        .from("users")
+        .upsert(userRows, { onConflict: "email" });
+
     check(userError, "users");
 
-    const { error: couponError } = await supabase.from("coupons").upsert(coupons, { onConflict: "code" });
+    const { error: couponError } = await supabase
+        .from("coupons")
+        .upsert(coupons, { onConflict: "code" });
+
     check(couponError, "coupons");
 
     console.log(`Seed complete: ${categories.length} categories, ${products.length} products, ${users.length} users, ${coupons.length} coupons.`);
