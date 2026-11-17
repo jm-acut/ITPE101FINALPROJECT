@@ -2847,47 +2847,47 @@
   },
   "variable": [
     {
-      "id": "de1dc3d0-a612-45f1-8ef1-ef9b9c0a20ae",
+      "id": "7a5e536b-1b61-45ec-8c73-7803d8a335a6",
       "key": "regEmail",
       "value": ""
     },
     {
-      "id": "15591378-dbd7-47da-8685-396b60b4419b",
+      "id": "677133f5-252c-4003-9f50-b2c532440544",
       "key": "productId",
       "value": ""
     },
     {
-      "id": "80741c07-040c-40ef-a7af-0dbf67ee56b5",
+      "id": "43b3b9c0-7724-4e4b-b51f-1a6ec30496fb",
       "key": "orderId",
       "value": ""
     },
     {
-      "id": "38c65456-f3dd-4e8b-8291-982e5b657ae8",
+      "id": "ce206541-d99c-4039-9796-51bf57ba899e",
       "key": "idemKey",
       "value": ""
     },
     {
-      "id": "5e0f470d-1b50-4d08-970a-f583c678db95",
+      "id": "d6d75d25-89c9-4c1e-9d3c-c54eaafd7212",
       "key": "buildId",
       "value": ""
     },
     {
-      "id": "2b459f7f-50ef-470a-a4fe-6c528d297f16",
+      "id": "52120ded-b073-4dca-8b5b-130203516bf8",
       "key": "shareCode",
       "value": ""
     },
     {
-      "id": "be72f233-3b8d-471f-9178-6416e358fb73",
+      "id": "91eb10f4-1070-4437-b236-2855e8714d81",
       "key": "couponId",
       "value": ""
     },
     {
-      "id": "c61cc54a-4c90-4fb5-876d-b385db73ac19",
+      "id": "43a94b35-1c8b-4a79-8ffb-d71c8a0e7bf8",
       "key": "couponCode",
       "value": ""
     },
     {
-      "id": "59a178a0-ed43-494a-b12f-5be712602901",
+      "id": "d4301e4f-1375-4102-98ff-fef2bdf2e142",
       "key": "nowMs",
       "value": ""
     }
