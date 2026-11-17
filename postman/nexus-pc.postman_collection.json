@@ -1,57 +1,10 @@
 {
   "info": {
+    "_postman_id": "47af67d5-4341-44e8-b25a-cf2d6866f1e4",
     "name": "NEXUS PC API",
     "description": "Requests with assertions for every module, including negative cases. Run the folders in order with the 'NEXUS PC (local)' environment. The database must be seeded (npm run seed). No secrets are stored here: tokens are filled in by the login requests.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
-  "auth": {
-    "type": "bearer",
-    "bearer": [
-      {
-        "key": "token",
-        "value": "{{customerToken}}",
-        "type": "string"
-      }
-    ]
-  },
-  "variable": [
-    {
-      "key": "regEmail",
-      "value": ""
-    },
-    {
-      "key": "productId",
-      "value": ""
-    },
-    {
-      "key": "orderId",
-      "value": ""
-    },
-    {
-      "key": "idemKey",
-      "value": ""
-    },
-    {
-      "key": "buildId",
-      "value": ""
-    },
-    {
-      "key": "shareCode",
-      "value": ""
-    },
-    {
-      "key": "couponId",
-      "value": ""
-    },
-    {
-      "key": "couponCode",
-      "value": ""
-    },
-    {
-      "key": "nowMs",
-      "value": ""
-    }
-  ],
   "item": [
     {
       "name": "00 System",
@@ -72,7 +25,11 @@
               }
             }
           ],
+          "id": "b7889e50-6a1b-49a5-a213-add2fa71f8b0",
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -83,13 +40,12 @@
               "path": [
                 "health"
               ]
-            },
-            "auth": {
-              "type": "noauth"
             }
-          }
+          },
+          "response": []
         }
-      ]
+      ],
+      "id": "9639175d-63c8-410e-8888-3f684d76693f"
     },
     {
       "name": "01 Auth",
@@ -119,7 +75,11 @@
               }
             }
           ],
+          "id": "d44fe79f-6bbe-4002-94b5-51a07c59ad0f",
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
               {
@@ -127,6 +87,15 @@
                 "value": "application/json"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Tester\",\n  \"email\": \"{{regEmail}}\",\n  \"password\": \"Postman1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/auth/register",
               "host": [
@@ -136,20 +105,9 @@
                 "auth",
                 "register"
               ]
-            },
-            "auth": {
-              "type": "noauth"
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Postman Tester\",\n  \"email\": \"{{regEmail}}\",\n  \"password\": \"Postman1234\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Register with the same email again (duplicate)",
@@ -165,7 +123,11 @@
               }
             }
           ],
+          "id": "1f33af0f-e564-4722-8f50-a69b968ee0bd",
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
               {
@@ -173,6 +135,15 @@
                 "value": "application/json"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Tester\",\n  \"email\": \"{{regEmail}}\",\n  \"password\": \"Postman1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/auth/register",
               "host": [
@@ -182,20 +153,9 @@
                 "auth",
                 "register"
               ]
-            },
-            "auth": {
-              "type": "noauth"
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Postman Tester\",\n  \"email\": \"{{regEmail}}\",\n  \"password\": \"Postman1234\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Register with invalid input",
@@ -212,7 +172,11 @@
               }
             }
           ],
+          "id": "767a36d9-a22b-4d2f-836d-b8258041babc",
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
               {
@@ -220,6 +184,15 @@
                 "value": "application/json"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"x\",\n  \"email\": \"not-an-email\",\n  \"password\": \"short\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/auth/register",
               "host": [
@@ -229,20 +202,9 @@
                 "auth",
                 "register"
               ]
-            },
-            "auth": {
-              "type": "noauth"
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"x\",\n  \"email\": \"not-an-email\",\n  \"password\": \"short\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Login as customer",
@@ -259,7 +221,11 @@
               }
             }
           ],
+          "id": "e8d3118c-f345-4623-9647-9eeddbad27c8",
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
               {
@@ -267,6 +233,15 @@
                 "value": "application/json"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{customerEmail}}\",\n  \"password\": \"{{customerPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/auth/login",
               "host": [
@@ -276,20 +251,9 @@
                 "auth",
                 "login"
               ]
-            },
-            "auth": {
-              "type": "noauth"
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{customerEmail}}\",\n  \"password\": \"{{customerPassword}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Login as admin",
@@ -306,7 +270,11 @@
               }
             }
           ],
+          "id": "9db46bad-f803-4410-af67-6615ea7d9dd5",
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
               {
@@ -314,6 +282,15 @@
                 "value": "application/json"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/auth/login",
               "host": [
@@ -323,20 +300,9 @@
                 "auth",
                 "login"
               ]
-            },
-            "auth": {
-              "type": "noauth"
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Login with a wrong password",
@@ -352,7 +318,11 @@
               }
             }
           ],
+          "id": "0513d4a4-3a28-45a8-a655-63e32bd3f5c2",
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
               {
@@ -360,6 +330,15 @@
                 "value": "application/json"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{customerEmail}}\",\n  \"password\": \"WrongPassword1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/auth/login",
               "host": [
@@ -369,20 +348,9 @@
                 "auth",
                 "login"
               ]
-            },
-            "auth": {
-              "type": "noauth"
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{customerEmail}}\",\n  \"password\": \"WrongPassword1\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Get my profile",
@@ -398,7 +366,18 @@
               }
             }
           ],
+          "id": "209e39ea-4dbc-4226-8c7f-70e3467fd2b6",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -410,18 +389,9 @@
                 "auth",
                 "me"
               ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{customerToken}}",
-                  "type": "string"
-                }
-              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Get my profile without a token (unauthenticated)",
@@ -437,7 +407,11 @@
               }
             }
           ],
+          "id": "5fdeb2a4-60fc-4436-b31f-c5defb02eace",
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -449,13 +423,12 @@
                 "auth",
                 "me"
               ]
-            },
-            "auth": {
-              "type": "noauth"
             }
-          }
+          },
+          "response": []
         }
-      ]
+      ],
+      "id": "6139b54c-b93e-46cd-879e-a0992a07b1a0"
     },
     {
       "name": "02 Catalog",
@@ -474,7 +447,11 @@
               }
             }
           ],
+          "id": "e646d559-2762-4771-bd6a-e2cf1ff2a39a",
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -485,11 +462,9 @@
               "path": [
                 "categories"
               ]
-            },
-            "auth": {
-              "type": "noauth"
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Search products",
@@ -506,7 +481,11 @@
               }
             }
           ],
+          "id": "7f60d33e-7a07-42a9-8bfb-dacedc843fc0",
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -531,11 +510,9 @@
                   "value": "5"
                 }
               ]
-            },
-            "auth": {
-              "type": "noauth"
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Get one product",
@@ -551,7 +528,11 @@
               }
             }
           ],
+          "id": "7aed9f67-6857-448b-bb24-b38f8b35ebe7",
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -563,11 +544,9 @@
                 "products",
                 "{{productId}}"
               ]
-            },
-            "auth": {
-              "type": "noauth"
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Get a product that does not exist (not found)",
@@ -583,7 +562,11 @@
               }
             }
           ],
+          "id": "7831b475-a802-4536-a08c-53aa0f0dbd4e",
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -595,11 +578,9 @@
                 "products",
                 "00000000-0000-4000-8000-000000000000"
               ]
-            },
-            "auth": {
-              "type": "noauth"
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Get a product with a malformed id (invalid input)",
@@ -615,7 +596,11 @@
               }
             }
           ],
+          "id": "d45b92a1-b5e8-465e-ab2c-89c026065502",
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -627,11 +612,9 @@
                 "products",
                 "not-a-uuid"
               ]
-            },
-            "auth": {
-              "type": "noauth"
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "List products with an invalid sort (invalid input)",
@@ -647,7 +630,11 @@
               }
             }
           ],
+          "id": "b0eff301-5ff2-4c67-ba8b-01bb3188ac8e",
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -664,13 +651,12 @@
                   "value": "password_hash"
                 }
               ]
-            },
-            "auth": {
-              "type": "noauth"
             }
-          }
+          },
+          "response": []
         }
-      ]
+      ],
+      "id": "d10519d0-df10-4cf7-91a1-47226bf5719a"
     },
     {
       "name": "03 Cart",
@@ -689,7 +675,18 @@
               }
             }
           ],
+          "id": "a14cb717-aa0c-4747-a530-e6f0a97f3396",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "DELETE",
             "header": [],
             "url": {
@@ -700,18 +697,9 @@
               "path": [
                 "cart"
               ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{customerToken}}",
-                  "type": "string"
-                }
-              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Add a product to the cart",
@@ -727,24 +715,8 @@
               }
             }
           ],
+          "id": "62a27ea1-ab09-48ea-b7b0-36d0bf2af8c7",
           "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/cart/items",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "cart",
-                "items"
-              ]
-            },
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -755,6 +727,13 @@
                 }
               ]
             },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"productId\": \"{{productId}}\",\n  \"quantity\": 1\n}",
@@ -763,8 +742,19 @@
                   "language": "json"
                 }
               }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/cart/items",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cart",
+                "items"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Add more than is in stock (out of stock)",
@@ -780,24 +770,8 @@
               }
             }
           ],
+          "id": "d2ac64ac-1b4e-4c2d-b755-e20e697b47f1",
           "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/cart/items",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "cart",
-                "items"
-              ]
-            },
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -808,6 +782,13 @@
                 }
               ]
             },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"productId\": \"{{productId}}\",\n  \"quantity\": 50\n}",
@@ -816,8 +797,19 @@
                   "language": "json"
                 }
               }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/cart/items",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cart",
+                "items"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Add an item with an invalid quantity (invalid input)",
@@ -833,24 +825,8 @@
               }
             }
           ],
+          "id": "35b2684d-69c3-46e2-93c5-03a0454b4c9b",
           "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/cart/items",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "cart",
-                "items"
-              ]
-            },
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -861,6 +837,13 @@
                 }
               ]
             },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"productId\": \"{{productId}}\",\n  \"quantity\": 0\n}",
@@ -869,8 +852,19 @@
                   "language": "json"
                 }
               }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/cart/items",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cart",
+                "items"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Read my cart without a token (unauthenticated)",
@@ -886,7 +880,11 @@
               }
             }
           ],
+          "id": "3b7f4b97-d435-4bf8-aa97-2a89b9d34f68",
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -897,13 +895,12 @@
               "path": [
                 "cart"
               ]
-            },
-            "auth": {
-              "type": "noauth"
             }
-          }
+          },
+          "response": []
         }
-      ]
+      ],
+      "id": "082b6577-3d1b-40a5-81a0-e3e9dc83d059"
     },
     {
       "name": "04 Checkout and orders",
@@ -922,24 +919,8 @@
               }
             }
           ],
+          "id": "865f59b7-3411-443b-8361-3c0539fed34a",
           "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/orders/quote",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "orders",
-                "quote"
-              ]
-            },
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -950,6 +931,13 @@
                 }
               ]
             },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{}",
@@ -958,8 +946,19 @@
                   "language": "json"
                 }
               }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders/quote",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders",
+                "quote"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Quote with an unknown coupon (invalid coupon)",
@@ -975,24 +974,8 @@
               }
             }
           ],
+          "id": "a4f0b906-cb09-46f9-9cd5-bbeb467218fa",
           "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/orders/quote",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "orders",
-                "quote"
-              ]
-            },
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -1003,6 +986,13 @@
                 }
               ]
             },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"couponCode\": \"NOSUCHCODE999\"\n}",
@@ -1011,8 +1001,19 @@
                   "language": "json"
                 }
               }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders/quote",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders",
+                "quote"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Quote with an expired coupon (invalid coupon)",
@@ -1028,24 +1029,8 @@
               }
             }
           ],
+          "id": "35590ecc-d7b4-438b-935b-4ce10323d481",
           "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/orders/quote",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "orders",
-                "quote"
-              ]
-            },
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -1056,6 +1041,13 @@
                 }
               ]
             },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"couponCode\": \"{{expiredCoupon}}\"\n}",
@@ -1064,8 +1056,19 @@
                   "language": "json"
                 }
               }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders/quote",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders",
+                "quote"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Place an order",
@@ -1091,7 +1094,18 @@
               }
             }
           ],
+          "id": "4f0ce272-53de-4341-86b5-39a525189c79",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [
               {
@@ -1103,25 +1117,6 @@
                 "value": "{{idemKey}}"
               }
             ],
-            "url": {
-              "raw": "{{baseUrl}}/orders",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "orders"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{customerToken}}",
-                  "type": "string"
-                }
-              ]
-            },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"shipping\": {\n    \"name\": \"Postman Tester\",\n    \"phone\": \"09171234567\",\n    \"address\": \"123 Test Street, Barangay Uno, Iligan City\"\n  }\n}",
@@ -1130,8 +1125,18 @@
                   "language": "json"
                 }
               }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Place the same order again (duplicate idempotency key)",
@@ -1147,7 +1152,18 @@
               }
             }
           ],
+          "id": "248d7dea-6d18-448c-94f5-5ce7786ce622",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [
               {
@@ -1159,25 +1175,6 @@
                 "value": "{{idemKey}}"
               }
             ],
-            "url": {
-              "raw": "{{baseUrl}}/orders",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "orders"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{customerToken}}",
-                  "type": "string"
-                }
-              ]
-            },
             "body": {
               "mode": "raw",
               "raw": "{\n  \"shipping\": {\n    \"name\": \"Postman Tester\",\n    \"phone\": \"09171234567\",\n    \"address\": \"123 Test Street, Barangay Uno, Iligan City\"\n  }\n}",
@@ -1186,8 +1183,18 @@
                   "language": "json"
                 }
               }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Place an order without an Idempotency-Key (invalid input)",
@@ -1203,23 +1210,8 @@
               }
             }
           ],
+          "id": "712cccf2-9e00-4a36-86a5-8aefa1b56155",
           "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/orders",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "orders"
-              ]
-            },
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -1230,6 +1222,13 @@
                 }
               ]
             },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"shipping\": {\n    \"name\": \"Postman Tester\",\n    \"phone\": \"09171234567\",\n    \"address\": \"123 Test Street, Barangay Uno, Iligan City\"\n  }\n}",
@@ -1238,8 +1237,18 @@
                   "language": "json"
                 }
               }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "orders"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Read my order",
@@ -1255,7 +1264,18 @@
               }
             }
           ],
+          "id": "cd545381-a93c-4f8f-ad44-827cdaedbe9e",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -1267,18 +1287,9 @@
                 "orders",
                 "{{orderId}}"
               ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{customerToken}}",
-                  "type": "string"
-                }
-              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Another customer reads my order (hidden)",
@@ -1294,7 +1305,18 @@
               }
             }
           ],
+          "id": "22a87b92-fece-4633-8245-d67463180f68",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{otherToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -1306,18 +1328,9 @@
                 "orders",
                 "{{orderId}}"
               ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{otherToken}}",
-                  "type": "string"
-                }
-              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Read an order that does not exist (not found)",
@@ -1333,7 +1346,18 @@
               }
             }
           ],
+          "id": "0fe808a5-bdea-4448-9660-7a422028d9ff",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -1345,18 +1369,9 @@
                 "orders",
                 "00000000-0000-4000-8000-000000000000"
               ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{customerToken}}",
-                  "type": "string"
-                }
-              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "List my orders",
@@ -1372,7 +1387,18 @@
               }
             }
           ],
+          "id": "12571ad2-ea95-46b0-929f-b2cf9a8c95e3",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -1393,18 +1419,9 @@
                   "value": "5"
                 }
               ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{customerToken}}",
-                  "type": "string"
-                }
-              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Cancel my order",
@@ -1420,7 +1437,18 @@
               }
             }
           ],
+          "id": "0b8470b0-11a9-4741-aeb4-f155cebaf2ed",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [],
             "url": {
@@ -1433,18 +1461,9 @@
                 "{{orderId}}",
                 "cancel"
               ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{customerToken}}",
-                  "type": "string"
-                }
-              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Cancel it again (not allowed)",
@@ -1460,7 +1479,18 @@
               }
             }
           ],
+          "id": "96cea933-475c-414a-a89e-3e9fceef4df0",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [],
             "url": {
@@ -1473,20 +1503,12 @@
                 "{{orderId}}",
                 "cancel"
               ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{customerToken}}",
-                  "type": "string"
-                }
-              ]
             }
-          }
+          },
+          "response": []
         }
-      ]
+      ],
+      "id": "f53494f3-3c67-4292-8fe3-844efbe8c9f4"
     },
     {
       "name": "05 Payments and webhook",
@@ -1505,7 +1527,18 @@
               }
             }
           ],
+          "id": "d0469ce6-3cf9-438e-b93a-16407928885f",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [],
             "url": {
@@ -1518,18 +1551,9 @@
                 "{{orderId}}",
                 "pay"
               ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{customerToken}}",
-                  "type": "string"
-                }
-              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Webhook without a signature (invalid webhook signature)",
@@ -1545,7 +1569,11 @@
               }
             }
           ],
+          "id": "8d4014c4-bec4-44f6-9d38-c787bc57b5f8",
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
               {
@@ -1553,6 +1581,15 @@
                 "value": "application/json"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"pm_pay_1\",\n  \"status\": \"PAYMENT_SUCCESS\",\n  \"amount\": 1,\n  \"currency\": \"PHP\",\n  \"requestReferenceNumber\": \"{{orderId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/webhooks/maya",
               "host": [
@@ -1562,20 +1599,9 @@
                 "webhooks",
                 "maya"
               ]
-            },
-            "auth": {
-              "type": "noauth"
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"id\": \"pm_pay_1\",\n  \"status\": \"PAYMENT_SUCCESS\",\n  \"amount\": 1,\n  \"currency\": \"PHP\",\n  \"requestReferenceNumber\": \"{{orderId}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Webhook with a forged signature (invalid webhook signature)",
@@ -1601,7 +1627,11 @@
               }
             }
           ],
+          "id": "0cc507a5-2eb1-49c0-b4be-c64b8ab1fb12",
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
               {
@@ -1617,6 +1647,15 @@
                 "value": "{{nowMs}}"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"pm_pay_2\",\n  \"status\": \"PAYMENT_SUCCESS\",\n  \"amount\": 1,\n  \"currency\": \"PHP\",\n  \"requestReferenceNumber\": \"{{orderId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/webhooks/maya",
               "host": [
@@ -1626,22 +1665,12 @@
                 "webhooks",
                 "maya"
               ]
-            },
-            "auth": {
-              "type": "noauth"
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"id\": \"pm_pay_2\",\n  \"status\": \"PAYMENT_SUCCESS\",\n  \"amount\": 1,\n  \"currency\": \"PHP\",\n  \"requestReferenceNumber\": \"{{orderId}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
-          }
+          },
+          "response": []
         }
-      ]
+      ],
+      "id": "53d26bc7-11ad-40dc-9193-09e395cf8013"
     },
     {
       "name": "06 PC builds",
@@ -1660,7 +1689,11 @@
               }
             }
           ],
+          "id": "538ba1d4-67ad-4f94-9ae6-42ec361d1fac",
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
               {
@@ -1668,6 +1701,15 @@
                 "value": "application/json"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"partIds\": [\n    \"{{productId}}\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/builds/check",
               "host": [
@@ -1677,20 +1719,9 @@
                 "builds",
                 "check"
               ]
-            },
-            "auth": {
-              "type": "noauth"
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"partIds\": [\n    \"{{productId}}\"\n  ]\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Check with no parts (invalid input)",
@@ -1706,7 +1737,11 @@
               }
             }
           ],
+          "id": "6078fc06-c67e-40b0-ade1-caf86e5d455f",
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
               {
@@ -1714,6 +1749,15 @@
                 "value": "application/json"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"partIds\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/builds/check",
               "host": [
@@ -1723,20 +1767,9 @@
                 "builds",
                 "check"
               ]
-            },
-            "auth": {
-              "type": "noauth"
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"partIds\": []\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Save a build",
@@ -1752,23 +1785,8 @@
               }
             }
           ],
+          "id": "6b3ed76d-ba1c-4810-845a-1d4d183f7575",
           "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/builds",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "builds"
-              ]
-            },
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -1779,6 +1797,13 @@
                 }
               ]
             },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": \"Postman build\",\n  \"partIds\": [\n    \"{{productId}}\"\n  ]\n}",
@@ -1787,8 +1812,18 @@
                   "language": "json"
                 }
               }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/builds",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "builds"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Another customer reads my build (hidden)",
@@ -1804,7 +1839,18 @@
               }
             }
           ],
+          "id": "9048cab9-827c-4951-9cb8-1dd983ecac1d",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{otherToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -1816,18 +1862,9 @@
                 "builds",
                 "{{buildId}}"
               ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{otherToken}}",
-                  "type": "string"
-                }
-              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Share my build",
@@ -1843,7 +1880,18 @@
               }
             }
           ],
+          "id": "06853762-a0fb-4d77-91bf-fac63b9ddb99",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [],
             "url": {
@@ -1856,18 +1904,9 @@
                 "{{buildId}}",
                 "share"
               ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{customerToken}}",
-                  "type": "string"
-                }
-              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Open the shared build (public)",
@@ -1883,7 +1922,11 @@
               }
             }
           ],
+          "id": "ed1a5ce2-2bb8-46f6-99be-02b1af822504",
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -1896,11 +1939,9 @@
                 "shared",
                 "{{shareCode}}"
               ]
-            },
-            "auth": {
-              "type": "noauth"
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Delete my build",
@@ -1915,7 +1956,18 @@
               }
             }
           ],
+          "id": "d14972d4-c018-4dc0-b338-1d47ee10f022",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "DELETE",
             "header": [],
             "url": {
@@ -1927,18 +1979,9 @@
                 "builds",
                 "{{buildId}}"
               ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{customerToken}}",
-                  "type": "string"
-                }
-              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Open the shared build after deleting it (not found)",
@@ -1954,7 +1997,11 @@
               }
             }
           ],
+          "id": "ba5bc7b3-4e7f-4745-8410-c6d0403604e4",
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -1967,13 +2014,12 @@
                 "shared",
                 "{{shareCode}}"
               ]
-            },
-            "auth": {
-              "type": "noauth"
             }
-          }
+          },
+          "response": []
         }
-      ]
+      ],
+      "id": "6a25f929-839f-40ad-85ab-80fa701e06bf"
     },
     {
       "name": "07 AI assistant",
@@ -1992,7 +2038,11 @@
               }
             }
           ],
+          "id": "039b8c48-caf2-4fb6-a768-ff1399fa7a39",
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
               {
@@ -2000,6 +2050,15 @@
                 "value": "application/json"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"A gaming PC for 1080p games\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/assistant/recommend",
               "host": [
@@ -2009,20 +2068,9 @@
                 "assistant",
                 "recommend"
               ]
-            },
-            "auth": {
-              "type": "noauth"
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"prompt\": \"A gaming PC for 1080p games\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Ask the assistant with a too-short request (invalid input)",
@@ -2038,24 +2086,8 @@
               }
             }
           ],
+          "id": "0b2b23a7-8f2a-42de-96f0-9d5ab3f14b6b",
           "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/assistant/recommend",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "assistant",
-                "recommend"
-              ]
-            },
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -2066,6 +2098,13 @@
                 }
               ]
             },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"prompt\": \"hi\"\n}",
@@ -2074,8 +2113,19 @@
                   "language": "json"
                 }
               }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/assistant/recommend",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "assistant",
+                "recommend"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Ask the assistant for a build (needs a Gemini key)",
@@ -2091,24 +2141,8 @@
               }
             }
           ],
+          "id": "729a92a8-af73-4261-963f-ecbb4719fc20",
           "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/assistant/recommend",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "assistant",
-                "recommend"
-              ]
-            },
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -2119,6 +2153,13 @@
                 }
               ]
             },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"prompt\": \"A gaming PC for smooth 1080p games\",\n  \"budgetPesos\": 60000\n}",
@@ -2127,10 +2168,22 @@
                   "language": "json"
                 }
               }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/assistant/recommend",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "assistant",
+                "recommend"
+              ]
             }
-          }
+          },
+          "response": []
         }
-      ]
+      ],
+      "id": "59d370e8-3653-43e1-982b-30a367424606"
     },
     {
       "name": "08 Admin",
@@ -2149,7 +2202,18 @@
               }
             }
           ],
+          "id": "e7ec66c1-e12d-45dc-b2e0-9a17255e382b",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -2161,18 +2225,9 @@
                 "admin",
                 "dashboard"
               ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{customerToken}}",
-                  "type": "string"
-                }
-              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Open the admin dashboard without a token (unauthenticated)",
@@ -2188,7 +2243,11 @@
               }
             }
           ],
+          "id": "ad928dea-76e3-4c2b-acee-2dddc6ef1e6c",
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -2200,11 +2259,9 @@
                 "admin",
                 "dashboard"
               ]
-            },
-            "auth": {
-              "type": "noauth"
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Admin dashboard",
@@ -2220,7 +2277,18 @@
               }
             }
           ],
+          "id": "ccd1a536-1616-446a-8826-845babb2e1c9",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -2232,18 +2300,9 @@
                 "admin",
                 "dashboard"
               ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Admin lists all products",
@@ -2259,7 +2318,18 @@
               }
             }
           ],
+          "id": "a3d8108d-9386-411b-a1c4-8ae4d4352c37",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -2281,18 +2351,9 @@
                   "value": "5"
                 }
               ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Admin removes more stock than exists (stock cannot go negative)",
@@ -2308,7 +2369,18 @@
               }
             }
           ],
+          "id": "e217db19-0cf9-431a-94df-be222d2e5af8",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [
               {
@@ -2316,6 +2388,15 @@
                 "value": "application/json"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"change\": -100000,\n  \"reason\": \"Postman negative stock test\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/admin/products/{{productId}}/stock",
               "host": [
@@ -2327,27 +2408,9 @@
                 "{{productId}}",
                 "stock"
               ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"change\": -100000,\n  \"reason\": \"Postman negative stock test\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Admin lists orders",
@@ -2363,7 +2426,18 @@
               }
             }
           ],
+          "id": "36271fc5-c36c-46be-aab1-f22a295fbb3a",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -2381,18 +2455,9 @@
                   "value": "5"
                 }
               ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Admin reads an order that does not exist (not found)",
@@ -2408,7 +2473,18 @@
               }
             }
           ],
+          "id": "2b6e3011-767d-4b4b-ad52-86d76b375030",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -2421,18 +2497,9 @@
                 "orders",
                 "00000000-0000-4000-8000-000000000000"
               ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Admin moves a cancelled order to shipped (illegal transition)",
@@ -2448,7 +2515,18 @@
               }
             }
           ],
+          "id": "f0a88b6e-d011-49ee-b1b7-c309a36d882b",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "PATCH",
             "header": [
               {
@@ -2456,6 +2534,15 @@
                 "value": "application/json"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"shipped\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/admin/orders/{{orderId}}/status",
               "host": [
@@ -2467,27 +2554,9 @@
                 "{{orderId}}",
                 "status"
               ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"status\": \"shipped\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Admin sets an order to paid by hand (system only)",
@@ -2503,7 +2572,18 @@
               }
             }
           ],
+          "id": "3451865c-0bd6-4cfb-bf49-90aaafb65ce4",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "PATCH",
             "header": [
               {
@@ -2511,6 +2591,15 @@
                 "value": "application/json"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"paid\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/admin/orders/{{orderId}}/status",
               "host": [
@@ -2522,27 +2611,9 @@
                 "{{orderId}}",
                 "status"
               ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"status\": \"paid\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Admin creates a coupon",
@@ -2568,24 +2639,8 @@
               }
             }
           ],
+          "id": "d208ea6b-99f8-48f3-8fa7-b38875ac4e4a",
           "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/admin/coupons",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "coupons"
-              ]
-            },
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -2596,6 +2651,13 @@
                 }
               ]
             },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"code\": \"{{couponCode}}\",\n  \"type\": \"percentage\",\n  \"value\": 15,\n  \"minSpendCents\": 100000,\n  \"usageLimit\": 10\n}",
@@ -2604,8 +2666,19 @@
                   "language": "json"
                 }
               }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/coupons",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "coupons"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Admin creates the same coupon again (duplicate)",
@@ -2621,24 +2694,8 @@
               }
             }
           ],
+          "id": "82a5f17a-67c3-4260-b164-a50a38e0af28",
           "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/admin/coupons",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "coupons"
-              ]
-            },
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -2649,6 +2706,13 @@
                 }
               ]
             },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"code\": \"{{couponCode}}\",\n  \"type\": \"percentage\",\n  \"value\": 15\n}",
@@ -2657,8 +2721,19 @@
                   "language": "json"
                 }
               }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/coupons",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "coupons"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Admin creates a coupon of 150 percent (invalid input)",
@@ -2674,24 +2749,8 @@
               }
             }
           ],
+          "id": "491a30c0-3ed7-4cbf-adaa-ce6c4e6ec597",
           "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/admin/coupons",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "coupons"
-              ]
-            },
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -2702,6 +2761,13 @@
                 }
               ]
             },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"code\": \"TOOBIG150\",\n  \"type\": \"percentage\",\n  \"value\": 150\n}",
@@ -2710,8 +2776,19 @@
                   "language": "json"
                 }
               }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/coupons",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "coupons"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Admin deletes the coupon",
@@ -2726,7 +2803,18 @@
               }
             }
           ],
+          "id": "9e1cec95-1389-4251-a525-6803cd435191",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "DELETE",
             "header": [],
             "url": {
@@ -2739,20 +2827,69 @@
                 "coupons",
                 "{{couponId}}"
               ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
             }
-          }
+          },
+          "response": []
         }
-      ]
+      ],
+      "id": "8d9debba-02a0-4f24-89df-3688f370fefb"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{customerToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "id": "de1dc3d0-a612-45f1-8ef1-ef9b9c0a20ae",
+      "key": "regEmail",
+      "value": ""
+    },
+    {
+      "id": "15591378-dbd7-47da-8685-396b60b4419b",
+      "key": "productId",
+      "value": ""
+    },
+    {
+      "id": "80741c07-040c-40ef-a7af-0dbf67ee56b5",
+      "key": "orderId",
+      "value": ""
+    },
+    {
+      "id": "38c65456-f3dd-4e8b-8291-982e5b657ae8",
+      "key": "idemKey",
+      "value": ""
+    },
+    {
+      "id": "5e0f470d-1b50-4d08-970a-f583c678db95",
+      "key": "buildId",
+      "value": ""
+    },
+    {
+      "id": "2b459f7f-50ef-470a-a4fe-6c528d297f16",
+      "key": "shareCode",
+      "value": ""
+    },
+    {
+      "id": "be72f233-3b8d-471f-9178-6416e358fb73",
+      "key": "couponId",
+      "value": ""
+    },
+    {
+      "id": "c61cc54a-4c90-4fb5-876d-b385db73ac19",
+      "key": "couponCode",
+      "value": ""
+    },
+    {
+      "id": "59a178a0-ed43-494a-b12f-5be712602901",
+      "key": "nowMs",
+      "value": ""
     }
   ]
 }

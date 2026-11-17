@@ -1,0 +1,17 @@
+{
+  "workspace": {
+    "id": "aee66530-473d-455d-8906-ca5fb97171c9"
+  },
+  "entities": {
+    "environments": [
+      "..\\nexus-pc.local.postman_environment.json"
+    ],
+    "flows": [],
+    "globals": [],
+    "mocks": [],
+    "specs": [],
+    "collections": [
+      "..\\nexus-pc.postman_collection.json"
+    ]
+  }
+}

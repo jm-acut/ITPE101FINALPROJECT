@@ -114,6 +114,11 @@ openapi.yaml
 - **Payments:** after deploying, register the API's public webhook address in Maya: `npm run maya:webhook -- https://YOUR-API/api/v1/webhooks/maya`.
 - Both addresses must be HTTPS.
 
+## Deployment links
+Backend: https://itpe101finalproject.onrender.com 
+Swagger API Documentation: https://itpe101finalproject.onrender.com/api-docs 
+Health Check: https://itpe101finalproject.onrender.com/api/v1/health 
+
 ## Known limitations
 - Maya's sandbox keys are shared with other users, so webhook registration can collide; missed webhooks are recovered by the retrieve-on-return check and a scheduled check.
 - `PayMongoProvider` is covered by unit tests against a fake network and has not been tried against PayMongo's live service.
